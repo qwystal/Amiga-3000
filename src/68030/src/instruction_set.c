@@ -1,7 +1,44 @@
 #include <stdio.h>
 
 #include "typedefs.h"
+#include "instruction_set.h"
+
 #include "memory.c"
+#include "debug.c"
+
+word get_SR(A3000 *a3000)
+{
+    word SR = 0;
+    SR = a3000->cpu.SR.CCR.C;
+    SR = (a3000->cpu.SR.CCR.V << 1);
+    SR = (a3000->cpu.SR.CCR.Z << 2);
+    SR = (a3000->cpu.SR.CCR.N << 3);
+    SR = (a3000->cpu.SR.CCR.X << 4);
+    SR = (a3000->cpu.SR.I0 << 8);
+    SR = (a3000->cpu.SR.I1 << 9);
+    SR = (a3000->cpu.SR.I2 << 10);
+    SR = (a3000->cpu.SR.M << 12);
+    SR = (a3000->cpu.SR.S << 13);
+    SR = (a3000->cpu.SR.T0 << 14);
+    SR = (a3000->cpu.SR.T1 << 15);
+    return SR;
+}
+
+void set_SR(A3000 *a3000, word SR)
+{
+    a3000->cpu.SR.CCR.C = (SR & 0x01);
+    a3000->cpu.SR.CCR.V = !!(SR & 0x02);
+    a3000->cpu.SR.CCR.Z = !!(SR & 0x04);
+    a3000->cpu.SR.CCR.N = !!(SR & 0x08);
+    a3000->cpu.SR.CCR.X = !!(SR & 0x10);
+    a3000->cpu.SR.I0 = !!(SR & 0x100);
+    a3000->cpu.SR.I1 = !!(SR & 0x200);
+    a3000->cpu.SR.I2 = !!(SR & 0x400);
+    a3000->cpu.SR.M = !!(SR & 0x1000);
+    a3000->cpu.SR.S = !!(SR & 0x2000);
+    a3000->cpu.SR.T0 = !!(SR & 0x4000);
+    a3000->cpu.SR.T1 = !!(SR & 0x8000);
+}
 
 sword look_up_instruction(A3000 *a3000) {
     word chunk_1 = (a3000->opcode >> 12) & 0b1111; // Extract the 1st-4th bits
@@ -359,7 +396,7 @@ sword look_up_instruction(A3000 *a3000) {
                 default:
                     break;
             }
-            if ((a3000->opcode >> 11) & 0b1 == 0b1 && (a3000->opcode >> 7) & 0b111 == 0b001)
+            if (((a3000->opcode >> 11) & 0b1) == 0b1 && ((a3000->opcode >> 7) & 0b111) == 0b001)
             {
                 return call_MOVEM(a3000);
                 break;
@@ -474,7 +511,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_SUBA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && chunk_5 == 0b001 || 0b000)
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
             {
                 return call_SUBX(a3000);
                 break;
@@ -492,7 +529,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_CMPA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && chunk_5 == 0b001 || 0b000)
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
             {
                 return call_CMPM(a3000);
                 break;
@@ -546,7 +583,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_ADDA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && chunk_5 == 0b001 || 0b000)
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
             {
                 return call_ADDX(a3000);
                 break;
@@ -704,9 +741,9 @@ sword look_up_instruction(A3000 *a3000) {
             break;
     }
 
-    logError("Invalid a3000->opcode.");
+    logError("Invalid opcode.", *a3000);
     printf("Opcode: %X\n", a3000->opcode);
-    return;
+    return a3000->opcode;
 }
 
 sword call_ORI_to_CCR(A3000 *a3000) {
@@ -719,13 +756,155 @@ sword call_ORI_to_CCR(A3000 *a3000) {
     }
 
     word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
 
-    if (immediate & 0x01) a3000->cpu.SR.CCR.C = 1;
-    if (immediate & 0x02) a3000->cpu.SR.CCR.V = 1;
-    if (immediate & 0x04) a3000->cpu.SR.CCR.Z = 1;
-    if (immediate & 0x08) a3000->cpu.SR.CCR.N = 1;
-    if (immediate & 0x10) a3000->cpu.SR.CCR.X = 1;
+    a3000->cpu.SR.CCR.C |= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V |= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z |= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N |= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X |= !!(immediate & 0x10);
 
-    
     return INS_ORI_TO_CCR;
+}
+
+sword call_ORI_to_SR(A3000 *a3000)
+{
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_ORI_TO_SR;
+    }
+
+    word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SR.CCR.C |= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V |= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z |= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N |= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X |= !!(immediate & 0x10);
+    a3000->cpu.SR.I0 |= !!(immediate & 0x100);
+    a3000->cpu.SR.I1 |= !!(immediate & 0x200);
+    a3000->cpu.SR.I2 |= !!(immediate & 0x400);
+    a3000->cpu.SR.M |= !!(immediate & 0x1000);
+    a3000->cpu.SR.S |= !!(immediate & 0x2000);
+    a3000->cpu.SR.T0 |= !!(immediate & 0x4000);
+    a3000->cpu.SR.T1 |= !!(immediate & 0x8000);
+
+    return INS_ORI_TO_SR;
+}
+
+sword call_ANDI_to_CCR(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_ANDI_TO_CCR;
+    }
+
+    word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SR.CCR.C &= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V &= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z &= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N &= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X &= !!(immediate & 0x10);
+
+    return INS_ANDI_TO_CCR;
+}
+
+sword call_ANDI_to_SR(A3000 *a3000)
+{
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_ANDI_TO_SR;
+    }
+
+    word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SR.CCR.C &= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V &= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z &= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N &= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X &= !!(immediate & 0x10);
+    a3000->cpu.SR.I0 &= !!(immediate & 0x100);
+    a3000->cpu.SR.I1 &= !!(immediate & 0x200);
+    a3000->cpu.SR.I2 &= !!(immediate & 0x400);
+    a3000->cpu.SR.M &= !!(immediate & 0x1000);
+    a3000->cpu.SR.S &= !!(immediate & 0x2000);
+    a3000->cpu.SR.T0 &= !!(immediate & 0x4000);
+    a3000->cpu.SR.T1 &= !!(immediate & 0x8000);
+
+    return INS_ANDI_TO_SR;
+}
+
+sword call_EORI_to_CCR(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_EORI_TO_CCR;
+    }
+
+    word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SR.CCR.C ^= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V ^= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z ^= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N ^= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X ^= !!(immediate & 0x10);
+
+    return INS_EORI_TO_CCR;
+}
+
+sword call_EORI_to_SR(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_EORI_TO_SR;
+    }
+
+    word immediate = rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SR.CCR.C ^= (immediate & 0x01);
+    a3000->cpu.SR.CCR.V ^= !!(immediate & 0x02);
+    a3000->cpu.SR.CCR.Z ^= !!(immediate & 0x04);
+    a3000->cpu.SR.CCR.N ^= !!(immediate & 0x08);
+    a3000->cpu.SR.CCR.X ^= !!(immediate & 0x10);
+    a3000->cpu.SR.I0 ^= !!(immediate & 0x100);
+    a3000->cpu.SR.I1 ^= !!(immediate & 0x200);
+    a3000->cpu.SR.I2 ^= !!(immediate & 0x400);
+    a3000->cpu.SR.M ^= !!(immediate & 0x1000);
+    a3000->cpu.SR.S ^= !!(immediate & 0x2000);
+    a3000->cpu.SR.T0 ^= !!(immediate & 0x4000);
+    a3000->cpu.SR.T1 ^= !!(immediate & 0x8000);
+
+    return INS_EORI_TO_SR;
+}
+
+sword call_ILLEGAL(A3000 *a3000)
+{
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.SSP -= 2;
+    ww_mem(a3000, a3000->cpu.SSP, 4 * 4); // Vector number is 4, the vector address is always Vn * 4
+    a3000->cpu.SSP -= 4;
+    wl_mem(a3000, a3000->cpu.SSP, a3000->cpu.PC);
+    a3000->cpu.SSP -= 2;
+    ww_mem(a3000, a3000->cpu.SSP, get_SR(a3000));
+    a3000->cpu.PC = rl_mem(a3000, 4 * 4);
+    return INS_ILLEGAL;
 }

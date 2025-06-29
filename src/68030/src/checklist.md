@@ -1,4 +1,4 @@
-Finished: (double checked? cycles? condition codes? mnemonic is different than the shortened version of the PRM?)
+Finished: (double checked? cycles? condition codes? mnemonic is different than the shortened version of the PRM? privilege level?)
     
 To-Do:
     ASL, ASR

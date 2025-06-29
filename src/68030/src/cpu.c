@@ -8,6 +8,6 @@ lword exception_vector_lookup(byte *mem, byte vector_number)
 void initialize_cpu(CPU *cpu, byte *mem)
 {
     memset(cpu, 0, sizeof(CPU));
-    cpu->ISP = exception_vector_lookup(mem, 0);
+    cpu->SSP = exception_vector_lookup(mem, 0);
     cpu->PC = exception_vector_lookup(mem, 1);
 }

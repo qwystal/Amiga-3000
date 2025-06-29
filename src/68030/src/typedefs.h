@@ -16,8 +16,6 @@ typedef int64_t sqword;
 
 typedef struct MC68030
 {   
-    sqword cycles;
-    
     struct GPR // 32-bit General Purpose Registers
     {
         lword D[8];
@@ -26,7 +24,7 @@ typedef struct MC68030
     
     lword PC; // 32-bit Program Counter
     
-    lword ISP; // 32-bit Supervisor and Interrupt Stack Pointer
+    lword SSP; // 32-bit Supervisor and Interrupt Stack Pointer
     
     lword MSP; // 32-bit Supervisor Stack Pointer
     
@@ -54,21 +52,23 @@ typedef struct MC68030
 
     struct SR // 16-bit Status Register
     {
-        word I0 : 1; // Interrupt level 0
-        word I1 : 1; // Interrupt level 1
-        word I2 : 1; // Interrupt level 2
-        word M : 1; // Master/Interrupt state, Indicates active stack pointer
-        word S : 1; // Supervisor/User state, Indicates active stack pointer
-        word T0 : 1; // Trace mode
         word T1 : 1; // Trace mode
+        word T0 : 1; // Trace mode
+        word S : 1; // Supervisor/User state, Indicates active stack pointer
+        word M : 1; // Master/Interrupt state, Indicates active stack pointer
+        word ZERO : 1; // Always zero
+        word I2 : 1; // Interrupt level 2
+        word I1 : 1; // Interrupt level 1
+        word I0 : 1; // Interrupt level 0
 
         struct CCR // Condition Code Register
         {
-            word C : 1; // Carry flag
-            word V : 1; // Overflow flag
-            word Z : 1; // Zero flag
-            word N : 1; // Negative flag
+            word ZERO : 3; // Always zero
             word X : 1; // Extend flag
+            word N : 1; // Negative flag
+            word Z : 1; // Zero flag
+            word V : 1; // Overflow flag
+            word C : 1; // Carry flag
         } CCR;
     } SR;
     
@@ -83,6 +83,7 @@ typedef struct Amiga_3000
     byte memory[DEFAULT_MEM_SIZE];
     word opcode;
     byte debugLevel;
+    word cycles;
 } A3000;
 
 

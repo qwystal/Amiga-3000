@@ -4,10 +4,15 @@
 #include "typedefs.h"
 #include "defines.h"
 
+void signal(word signal); // in or out?
+
 void exception(word vector);
 
 word get_SR(A3000 *a3000);
 void set_SR(A3000 *a3000, word SR);
+
+word get_CCR(A3000 *a3000);
+void set_CCR(A3000 *a3000, word CCR);
 
 sword look_up_instruction(A3000 *a3000);
 

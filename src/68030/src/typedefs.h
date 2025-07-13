@@ -19,12 +19,12 @@ typedef struct MC68030
     struct GPR // 32-bit General Purpose Registers
     {
         lword D[8];
-        lword A[8]; // A[7] acts as the System Stack Pointer (SP)
+        lword A[8]; // A[8] acts as the System Stack Pointer (SP)
     } GPR;
     
     lword PC; // 32-bit Program Counter
     
-    lword SSP; // 32-bit Supervisor and Interrupt Stack Pointer
+    lword SSP; // 32-bit System Stack Pointer
     
     lword MSP; // 32-bit Supervisor Stack Pointer
     
@@ -49,6 +49,8 @@ typedef struct MC68030
     lword TT1; // 32-bit Transprent Translation Register
 
     word MMUSR; // 16-bit MMU Status Register
+
+    lword USP; // 32-bit User Stack Pointer
 
     struct SR // 16-bit Status Register
     {
@@ -86,6 +88,123 @@ typedef struct Amiga_3000
     word cycles;
 } A3000;
 
+/* not required
+// Four-Word Stack Frame
+typedef struct stackframe_$0
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+} SF$0;
 
+// Throwaway Four-Word Stack Frame
+typedef struct stackframe_$1
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+} SF$1;
+
+// Six-Word Stack Frame
+typedef struct stackframe_$2
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+    lword address;
+} SF$2;
+
+// Coprocessor Mid-Instruction Stack Frame
+typedef struct stackframe_$9
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+    lword ins_address; // Instruction Address
+    word internal_registers[4];
+} SF$9;
+
+// Short Bus Cycle Stack Frame
+typedef struct stackframe_$A
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+    word internal_registers[5];
+    word special_SR; // Special Status Register
+    word ins_pipe_stage_c; // Instruction Pipe Stage C
+    word ins_pipe_stage_b; // Instruction Pipe Stage C
+    lword data_cyc_fault_address; // Data Cycle Fault Address
+    lword data_output_buffer;
+} SF$A;
+
+// Long Bus Cycle Stack Frame
+typedef struct stackframe_$B
+{
+    word SR; // Status Register
+    lword PC; // Program Counter
+    word fo; // Format/Offset
+    word internal_registers[30];
+    word special_SR; // Special Status Register
+    word ins_pipe_stage_c; // Instruction Pipe Stage C
+    word ins_pipe_stage_b; // Instruction Pipe Stage C
+    lword data_cyc_fault_address; // Data Cycle Fault Address
+    lword data_output_buffer;
+    lword stage_b_address;
+    lword data_input_buffer;
+    word ver_info; // Version# / Internal Information
+} SF$B;
+
+// CPU32 Bus Error for Prefetches and Operands Stack Frame
+typedef struct stackframe_$C0
+{
+    word SR;
+    word PC_high;
+    word PC_low;
+    word fo; // Format/Offset
+    word faulted_addr_high; // Faulted Address High
+    word faulted_addr_low; // Faulted Address Low
+    word DBUF_high;
+    word DBUF_low;
+    word CIPC_high; // Current Instruction Program Counter High
+    word CIPC_low; // Current Instruction Program Counter Low
+    word ITCR; // Internal Transfer Count Register
+    word id_special_SW; // Identification for Format $C0 Stack Frame / Special Status Word
+} SF$C0;
+
+// CPU32 Bus Error on MOVEM Operand Stack Frame
+typedef struct stackframe_$C1
+{
+    word SR;
+    word PC_high;
+    word PC_low;
+    word fo; // Format/Offset
+    word faulted_addr_high; // Faulted Address High
+    word faulted_addr_low; // Faulted Address Low
+    word DBUF_high;
+    word DBUF_low;
+    word CIPC_high; // Current Instruction Program Counter High
+    word CIPC_low; // Current Instruction Program Counter Low
+    word ITCR; // Internal Transfer Count Register
+    word id_special_SW; // Identification for Format $C0 Stack Frame / Special Status Word
+} SF$C1;
+
+// CPU32 Four- and Six-Word Bus Error Stack Frame
+typedef struct stackframe_$C2
+{
+    word SR;
+    word PC_high;
+    word PC_low;
+    word fo; // Format/Offset
+    word faulted_addr_high; // Faulted Address High
+    word faulted_addr_low; // Faulted Address Low
+    word DBUF_high;
+    word DBUF_low;
+    word CIPC_high; // Current Instruction Program Counter High
+    word CIPC_low; // Current Instruction Program Counter Low
+    word ITCR; // Internal Transfer Count Register
+    word id_special_SW; // Identification for Format $C0 Stack Frame / Special Status Word
+} SF$C2;
+*/
 
 #endif

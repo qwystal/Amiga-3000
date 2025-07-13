@@ -2,3 +2,8 @@
 - address_register_indirect_with_postincrement_mode
 - dubious because of signed + unsigned operation, registers are signed if negative flag is set? address_register_indirect_with_displacement_mode
 - 
+
+- NOP
+- call TRAP at privilege violation exception
+- implement STOP
+- signal()

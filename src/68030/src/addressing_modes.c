@@ -1,5 +1,6 @@
 #include "typedefs.h"
 #include "memory.c"
+#include "debug.c"
 
 /* In the data register direct mode, the effective address field specifies the data register
 containing the operand. */
@@ -71,7 +72,7 @@ word address_register_indirect_with_index_8bit_mode(A3000 *a3000, byte an, sbyte
             return ea;
         
         default:
-            logError("Invalid scale value. Must be 1, 2, 4 or 8.");
+            logError("Invalid scale value. Must be 1, 2, 4 or 8.", *a3000);
             return 0;
     }
 }
@@ -85,7 +86,7 @@ word address_register_indirect_with_index_base_displacement_mode(A3000 *a3000, b
             return ea; // todo
         
         default:
-            logError("Invalid scale value. Must be 1, 2, 4 or 8.");
+            logError("Invalid scale value. Must be 1, 2, 4 or 8.", *a3000);
             return 0;
     }
 }

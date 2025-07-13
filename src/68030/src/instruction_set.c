@@ -8,7 +8,7 @@
 
 word get_SR(A3000 *a3000)
 {
-    word SR = 0;
+    word SR;
     SR = a3000->cpu.SR.CCR.C;
     SR = (a3000->cpu.SR.CCR.V << 1);
     SR = (a3000->cpu.SR.CCR.Z << 2);
@@ -38,6 +38,24 @@ void set_SR(A3000 *a3000, word SR)
     a3000->cpu.SR.S = !!(SR & 0x2000);
     a3000->cpu.SR.T0 = !!(SR & 0x4000);
     a3000->cpu.SR.T1 = !!(SR & 0x8000);
+}
+
+word get_CCR(A3000 *a3000) {
+    word CCR;
+    CCR = a3000->cpu.SR.CCR.C;
+    CCR = (a3000->cpu.SR.CCR.V << 1);
+    CCR = (a3000->cpu.SR.CCR.Z << 2);
+    CCR = (a3000->cpu.SR.CCR.N << 3);
+    CCR = (a3000->cpu.SR.CCR.X << 4);
+    return CCR;
+}
+
+void set_CCR(A3000 *a3000, word CCR) {
+    a3000->cpu.SR.CCR.C = (CCR & 0x01);
+    a3000->cpu.SR.CCR.V = !!(CCR & 0x02);
+    a3000->cpu.SR.CCR.Z = !!(CCR & 0x04);
+    a3000->cpu.SR.CCR.N = !!(CCR & 0x08);
+    a3000->cpu.SR.CCR.X = !!(CCR & 0x10);
 }
 
 sword look_up_instruction(A3000 *a3000) {
@@ -767,8 +785,7 @@ sword call_ORI_to_CCR(A3000 *a3000) {
     return INS_ORI_TO_CCR;
 }
 
-sword call_ORI_to_SR(A3000 *a3000)
-{
+sword call_ORI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -817,8 +834,7 @@ sword call_ANDI_to_CCR(A3000 *a3000) {
     return INS_ANDI_TO_CCR;
 }
 
-sword call_ANDI_to_SR(A3000 *a3000)
-{
+sword call_ANDI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -895,8 +911,7 @@ sword call_EORI_to_SR(A3000 *a3000) {
     return INS_EORI_TO_SR;
 }
 
-sword call_ILLEGAL(A3000 *a3000)
-{
+sword call_ILLEGAL(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     a3000->cpu.SSP -= 2;
@@ -907,4 +922,131 @@ sword call_ILLEGAL(A3000 *a3000)
     ww_mem(a3000, a3000->cpu.SSP, get_SR(a3000));
     a3000->cpu.PC = rl_mem(a3000, 4 * 4);
     return INS_ILLEGAL;
+}
+
+sword call_RESET(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        return -INS_RESET;
+    }
+    
+    signal(SIG_RSTO); // asserted for 512 clock periods
+
+    return INS_RESET;
+}
+
+sword call_NOP(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    // NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline
+
+    return INS_NOP;
+}
+
+sword call_STOP(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        call_TRAP(a3000);
+        return -INS_STOP;
+    }
+    
+    set_SR(a3000, rw_mem(a3000, a3000->cpu.PC));
+
+    return INS_STOP;
+}
+
+sword call_RTE(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (!a3000->cpu.SR.S)
+    {
+        exception(EXC_VEC_PRIVILEGE_VIOLATION);
+        call_TRAP(a3000);
+        return -INS_RTE;
+    }
+    
+    set_SR(a3000, rw_mem(a3000, a3000->cpu.GPR.A[7]));
+    a3000->cpu.GPR.A[7] += 2;
+    a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
+    a3000->cpu.GPR.A[7] += 4;
+
+    switch (rw_mem(a3000, a3000->cpu.GPR.A[7]) >> 12) // Find out the Stack Frame using the Format/Offset word and deallocate it.
+    {
+        case 0b0000:
+            break;
+        
+        case 0b0001:
+            break;
+
+        case 0b0010:
+            a3000->cpu.GPR.A[7] += 4;
+            break;
+
+        case 0b1001:
+            a3000->cpu.GPR.A[7] += 8;
+            break;
+
+        case 0b1010:
+            a3000->cpu.GPR.A[7] += 24;
+            break;
+
+        case 0b1011:
+            a3000->cpu.GPR.A[7] += 84;
+            break;
+
+        case 0b1100:
+            a3000->cpu.GPR.A[7] += 16;
+            break;
+        
+        default:
+            logError("Unsupported Stack Exception Frame", *a3000);
+            break;
+    }
+
+    return INS_RTE;
+}
+
+sword call_RTD(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    slword displacement = (slword) rw_mem(a3000, a3000->cpu.PC);
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
+    a3000->cpu.GPR.A[7] += 4 + displacement;
+
+    return INS_RTD;
+}
+
+sword call_RTS(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
+    a3000->cpu.GPR.A[7] += 4;
+
+    return INS_RTS;
+}
+
+sword call_TRAPV(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    if (a3000->cpu.SR.CCR.V)
+    {
+        exception(7);
+        call_TRAP(a3000);
+    }
+}
+
+sword call_RTR(A3000 *a3000) {
+    set_CCR(a3000, rw_mem(a3000, a3000->cpu.GPR.A[7]));
+    a3000->cpu.GPR.A[7] += 2;
+    a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
+    a3000->cpu.GPR.A[7] += 4;
+
+    return INS_RTR;
 }

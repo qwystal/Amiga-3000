@@ -2,6 +2,7 @@
 #define HELLO 4
 
 int main() {
+    /*
     int a = 0b1000100101001110;
     printf("The value of a is: 1000100101001110\n");
     int b = (a >> 13) & 0b111; // AND, 0x0F = 0000 1111
@@ -16,6 +17,12 @@ int main() {
     int d = -HELLO;
 
     printf("c: %d\nd: %d\n", c, d);
+    */
+    for (size_t i = 0; i < 32; i++)
+    {
+        printf("#define D%d %d\n", i, i + 35);
+    }
+    
 
     return 0;
 }

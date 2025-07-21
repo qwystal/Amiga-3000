@@ -5,6 +5,7 @@
 
 #include "memory.c"
 #include "debug.c"
+#include "addressing_modes.c"
 
 word get_SR(A3000 *a3000)
 {
@@ -933,7 +934,7 @@ sword call_RESET(A3000 *a3000) {
         return -INS_RESET;
     }
     
-    signal(SIG_RSTO); // asserted for 512 clock periods
+    signal(0); // RSTO asserted for 512 clock periods, probably RESET?
 
     return INS_RESET;
 }

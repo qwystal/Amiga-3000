@@ -16,6 +16,8 @@ typedef int64_t sqword;
 
 typedef struct MC68030
 {   
+    byte pin[13]; // signal pins, only 101 out of the 104 (8 * 13) needed
+
     struct GPR // 32-bit General Purpose Registers
     {
         lword D[8];
@@ -87,6 +89,25 @@ typedef struct Amiga_3000
     byte debugLevel;
     word cycles;
 } A3000;
+
+typedef struct addressing_modes_arguments
+{
+    byte dn : 3; // data register
+    byte an : 3; // address register
+    byte xnsize : 1; // size of data, 0 for sign extended word, 1 for slword
+    slword d16; // 16-bit displacement int
+    slword d8; // 8-bit displacement int
+    byte xn : 4; // index register, can either be one or zero for address register or data register respectively, and the id of the register
+    byte scale : 2; // can only be 1, 2, 4 or 8
+    slword bd; // base displacement, size defined by bits 4 and 5
+    slword od; // outer displacement, size defined by IS - I/IS Encodings (Table 2-2 in PRM)
+    slword ew1; // extension word 1
+    slword ew2; // extension word 2
+    byte size : 2; // size of operation (in byte), 00 = 1, 01 = 2, 10 = 4, 11 = undefined
+    byte bs : 1; // base register suppress, 1 = suppressed
+    byte is : 1; // index register suppress, 1 = suppressed
+} AMA;
+
 
 /* not required
 // Four-Word Stack Frame

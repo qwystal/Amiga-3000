@@ -7,3 +7,7 @@
 - call TRAP at privilege violation exception
 - implement STOP
 - signal()
+- memory access bounds checking
+- addressing modes, implement suppression bits for modes requiring it
+- addressing modes, with PC read only in program space? program space = program counter
+- addressing modes, cast slword to lword at read mem operation?

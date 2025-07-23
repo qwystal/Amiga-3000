@@ -1,13 +1,9 @@
-- address_register_indirect_with_predecrement_mode
-- address_register_indirect_with_postincrement_mode
-- dubious because of signed + unsigned operation, registers are signed if negative flag is set? address_register_indirect_with_displacement_mode
-- 
-
 - NOP
 - call TRAP at privilege violation exception
 - implement STOP
 - signal()
 - memory access bounds checking
-- addressing modes, implement suppression bits for modes requiring it
 - addressing modes, with PC read only in program space? program space = program counter
 - addressing modes, cast slword to lword at read mem operation?
+- use PC instead of a3000->opcode
+- make it a ring 1 or 0 hypervisor (it cant be that hard, can it?)

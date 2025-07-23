@@ -1,3 +1,9 @@
+/*
+    This file includes:
+        - the function to decode the opcode
+        - every single instruction of the cpu
+*/
+
 #include <stdio.h>
 
 #include "typedefs.h"
@@ -7,25 +13,32 @@
 #include "debug.c"
 #include "addressing_modes.c"
 
-word get_SR(A3000 *a3000)
+/*  
+    I put static on all the function that aren't intended 
+    to be used by C files that include this file to hide them
+*/
+
+/* get the value of the Status Register */
+static word get_SR(A3000 *a3000) 
 {
     word SR;
-    SR = a3000->cpu.SR.CCR.C;
-    SR = (a3000->cpu.SR.CCR.V << 1);
-    SR = (a3000->cpu.SR.CCR.Z << 2);
-    SR = (a3000->cpu.SR.CCR.N << 3);
-    SR = (a3000->cpu.SR.CCR.X << 4);
-    SR = (a3000->cpu.SR.I0 << 8);
-    SR = (a3000->cpu.SR.I1 << 9);
-    SR = (a3000->cpu.SR.I2 << 10);
-    SR = (a3000->cpu.SR.M << 12);
-    SR = (a3000->cpu.SR.S << 13);
-    SR = (a3000->cpu.SR.T0 << 14);
-    SR = (a3000->cpu.SR.T1 << 15);
+    SR |= a3000->cpu.SR.CCR.C;
+    SR |= (a3000->cpu.SR.CCR.V << 1);
+    SR |= (a3000->cpu.SR.CCR.Z << 2);
+    SR |= (a3000->cpu.SR.CCR.N << 3);
+    SR |= (a3000->cpu.SR.CCR.X << 4);
+    SR |= (a3000->cpu.SR.I0 << 8);
+    SR |= (a3000->cpu.SR.I1 << 9);
+    SR |= (a3000->cpu.SR.I2 << 10);
+    SR |= (a3000->cpu.SR.M << 12);
+    SR |= (a3000->cpu.SR.S << 13);
+    SR |= (a3000->cpu.SR.T0 << 14);
+    SR |= (a3000->cpu.SR.T1 << 15);
     return SR;
 }
 
-void set_SR(A3000 *a3000, word SR)
+/* set the value of the Status Register */
+static void set_SR(A3000 *a3000, word SR) 
 {
     a3000->cpu.SR.CCR.C = (SR & 0x01);
     a3000->cpu.SR.CCR.V = !!(SR & 0x02);
@@ -41,17 +54,19 @@ void set_SR(A3000 *a3000, word SR)
     a3000->cpu.SR.T1 = !!(SR & 0x8000);
 }
 
-word get_CCR(A3000 *a3000) {
+/* get the value of the Condition Code Register (the operation flags reside there) */
+static word get_CCR(A3000 *a3000) { 
     word CCR;
-    CCR = a3000->cpu.SR.CCR.C;
-    CCR = (a3000->cpu.SR.CCR.V << 1);
-    CCR = (a3000->cpu.SR.CCR.Z << 2);
-    CCR = (a3000->cpu.SR.CCR.N << 3);
-    CCR = (a3000->cpu.SR.CCR.X << 4);
+    CCR |= a3000->cpu.SR.CCR.C;
+    CCR |= (a3000->cpu.SR.CCR.V << 1);
+    CCR |= (a3000->cpu.SR.CCR.Z << 2);
+    CCR |= (a3000->cpu.SR.CCR.N << 3);
+    CCR |= (a3000->cpu.SR.CCR.X << 4);
     return CCR;
 }
 
-void set_CCR(A3000 *a3000, word CCR) {
+/* set the value of the Condition Code Register (the operation flags reside there) */
+static void set_CCR(A3000 *a3000, word CCR) { 
     a3000->cpu.SR.CCR.C = (CCR & 0x01);
     a3000->cpu.SR.CCR.V = !!(CCR & 0x02);
     a3000->cpu.SR.CCR.Z = !!(CCR & 0x04);
@@ -59,6 +74,13 @@ void set_CCR(A3000 *a3000, word CCR) {
     a3000->cpu.SR.CCR.X = !!(CCR & 0x10);
 }
 
+/* 
+
+    this giant mess basically just splits the opcode into chunks and uses them
+    to find a specific instruction, which then gets called.
+    (this doesn't look elegant to me)
+
+*/
 sword look_up_instruction(A3000 *a3000) {
     word chunk_1 = (a3000->opcode >> 12) & 0b1111; // Extract the 1st-4th bits
     word chunk_2 = (a3000->opcode >> 9) & 0b111; // Extract the 5th-7th bits
@@ -74,70 +96,70 @@ sword look_up_instruction(A3000 *a3000) {
     
     switch (a3000->opcode) // Switch-statement for completely pre-defined a3000->opcodes
     {
-        case 0b0000000000111100: // ORI to CCR
+        case 0b0000000000111100:
             return call_ORI_to_CCR(a3000);
             break;
 
-        case 0b0000000001111100: // ORI to SR
+        case 0b0000000001111100:
             return call_ORI_to_SR(a3000);
             break;
 
-        case 0b0000001000111100: // ANDI to CCR
+        case 0b0000001000111100:
             return call_ANDI_to_CCR(a3000);
             break;
 
-        case 0b0000001001111100: // ANDI to SR
+        case 0b0000001001111100:
             return call_ANDI_to_SR(a3000);
             break;
 
-        case 0b0000101000111100: // EORI to CCR
+        case 0b0000101000111100:
             return call_EORI_to_CCR(a3000);
             break;
 
-        case 0b0000101001111100: // EORI to SR
+        case 0b0000101001111100:
             return call_EORI_to_SR(a3000);
             break;
 
-        case 0b0100101011111100: // ILLEGAL
+        case 0b0100101011111100:
             return call_ILLEGAL(a3000);
             break;
 
-        case 0b0100111001110000: // RESET
+        case 0b0100111001110000:
             return call_RESET(a3000);
             break;
 
-        case 0b0100111001110001: // NOP
+        case 0b0100111001110001:
             return call_NOP(a3000);
             break;
 
-        case 0b0100111001110010: // STOP
+        case 0b0100111001110010:
             return call_STOP(a3000);
             break;
 
-        case 0b0100111001110011: // RTE
+        case 0b0100111001110011:
             return call_RTE(a3000);
             break;
 
-        case 0b0100111001110100: // RTD
+        case 0b0100111001110100:
             return call_RTD(a3000);
             break;
 
-        case 0b0100111001110101: // RTS
+        case 0b0100111001110101:
             return call_RTS(a3000);
             break;
 
-        case 0b0100111001110110: // TRAPV
+        case 0b0100111001110110:
             return call_TRAPV(a3000);
             break;
 
-        case 0b0100111001110111: // RTR
+        case 0b0100111001110111:
             return call_RTR(a3000);
             break;
 
         default:
             break;
     }
-
+    // and here begins the mess
     switch (chunk_1)
     {
         case 0b0000:
@@ -258,7 +280,14 @@ sword look_up_instruction(A3000 *a3000) {
             }
             break;
 
-        case 0b0001 || 0b0010 || 0b0011:
+        /*
+            does this work as intended? before, I used case 0b0001 || 0b0010 etc., 
+            but I found out C first evaluates the two values (combines them), and
+            only after that execute the case statement.
+        */
+        case 0b0001:
+        case 0b0010:
+        case 0b0011:
             if (chunk_3 == 0b0 && chunk_4 == 0b001)
             {
                 return call_MOVEA(a3000);
@@ -530,7 +559,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_SUBA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || chunk_5 == 0b000))
             {
                 return call_SUBX(a3000);
                 break;
@@ -548,7 +577,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_CMPA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || chunk_5 == 0b000))
             {
                 return call_CMPM(a3000);
                 break;
@@ -584,7 +613,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_ABCD(a3000);
                 break;
             }
-            else if (chunk_4_5_5 == 0b10100 || 0b11000)
+            else if (chunk_4_5_5 == 0b10100 || chunk_4_5_5 == 0b11000)
             {
                 return call_EXG(a3000);
                 break;
@@ -602,7 +631,7 @@ sword look_up_instruction(A3000 *a3000) {
                 return call_ADDA(a3000);
                 break;
             }
-            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || 0b000))
+            else if (chunk_3 == 0b1 && (chunk_5 == 0b001 || chunk_5 == 0b000))
             {
                 return call_ADDX(a3000);
                 break;
@@ -765,7 +794,9 @@ sword look_up_instruction(A3000 *a3000) {
     return a3000->opcode;
 }
 
-sword call_ORI_to_CCR(A3000 *a3000) {
+/* here begins the implementation of the actual instructions */
+
+static sword call_ORI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -786,7 +817,7 @@ sword call_ORI_to_CCR(A3000 *a3000) {
     return INS_ORI_TO_CCR;
 }
 
-sword call_ORI_to_SR(A3000 *a3000) {
+static sword call_ORI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -814,7 +845,7 @@ sword call_ORI_to_SR(A3000 *a3000) {
     return INS_ORI_TO_SR;
 }
 
-sword call_ANDI_to_CCR(A3000 *a3000) {
+static sword call_ANDI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -835,7 +866,7 @@ sword call_ANDI_to_CCR(A3000 *a3000) {
     return INS_ANDI_TO_CCR;
 }
 
-sword call_ANDI_to_SR(A3000 *a3000) {
+static sword call_ANDI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -863,7 +894,7 @@ sword call_ANDI_to_SR(A3000 *a3000) {
     return INS_ANDI_TO_SR;
 }
 
-sword call_EORI_to_CCR(A3000 *a3000) {
+static sword call_EORI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -884,7 +915,7 @@ sword call_EORI_to_CCR(A3000 *a3000) {
     return INS_EORI_TO_CCR;
 }
 
-sword call_EORI_to_SR(A3000 *a3000) {
+static sword call_EORI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -912,7 +943,7 @@ sword call_EORI_to_SR(A3000 *a3000) {
     return INS_EORI_TO_SR;
 }
 
-sword call_ILLEGAL(A3000 *a3000) {
+static sword call_ILLEGAL(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     a3000->cpu.SSP -= 2;
@@ -925,7 +956,7 @@ sword call_ILLEGAL(A3000 *a3000) {
     return INS_ILLEGAL;
 }
 
-sword call_RESET(A3000 *a3000) {
+static sword call_RESET(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -939,7 +970,7 @@ sword call_RESET(A3000 *a3000) {
     return INS_RESET;
 }
 
-sword call_NOP(A3000 *a3000) {
+static sword call_NOP(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     // NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline
@@ -947,7 +978,7 @@ sword call_NOP(A3000 *a3000) {
     return INS_NOP;
 }
 
-sword call_STOP(A3000 *a3000) {
+static sword call_STOP(A3000 *a3000) {
     a3000->cpu.PC += 2;
     if (!a3000->cpu.SR.S)
     {
@@ -961,7 +992,7 @@ sword call_STOP(A3000 *a3000) {
     return INS_STOP;
 }
 
-sword call_RTE(A3000 *a3000) {
+static sword call_RTE(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -1012,7 +1043,7 @@ sword call_RTE(A3000 *a3000) {
     return INS_RTE;
 }
 
-sword call_RTD(A3000 *a3000) {
+static sword call_RTD(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     slword displacement = (slword) rw_mem(a3000, a3000->cpu.PC);
@@ -1024,7 +1055,7 @@ sword call_RTD(A3000 *a3000) {
     return INS_RTD;
 }
 
-sword call_RTS(A3000 *a3000) {
+static sword call_RTS(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
@@ -1033,7 +1064,7 @@ sword call_RTS(A3000 *a3000) {
     return INS_RTS;
 }
 
-sword call_TRAPV(A3000 *a3000) {
+static sword call_TRAPV(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (a3000->cpu.SR.CCR.V)
@@ -1043,7 +1074,7 @@ sword call_TRAPV(A3000 *a3000) {
     }
 }
 
-sword call_RTR(A3000 *a3000) {
+static sword call_RTR(A3000 *a3000) {
     set_CCR(a3000, rw_mem(a3000, a3000->cpu.GPR.A[7]));
     a3000->cpu.GPR.A[7] += 2;
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);

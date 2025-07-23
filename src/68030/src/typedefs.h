@@ -5,14 +5,14 @@
 
 #include "defines.h"
 
-typedef uint8_t byte;
-typedef int8_t sbyte;
-typedef uint16_t word;
-typedef int16_t sword;
-typedef uint32_t lword;
-typedef int32_t slword;
-typedef uint64_t qword;
-typedef int64_t sqword;
+typedef uint8_t byte; // unsigned 8-bit
+typedef int8_t sbyte; // signed 8-bit
+typedef uint16_t word; // unsigned 16-bit
+typedef int16_t sword; // signed 16-bit
+typedef uint32_t lword; // unsigned 32-bit (long word)
+typedef int32_t slword; // signed 32-bit (long word)
+typedef uint64_t qword; // unsigned 64-bit (quad word)
+typedef int64_t sqword; // signed 64-bit (quad word)
 
 typedef struct MC68030
 {   
@@ -21,7 +21,7 @@ typedef struct MC68030
     struct GPR // 32-bit General Purpose Registers
     {
         lword D[8];
-        lword A[8]; // A[8] acts as the System Stack Pointer (SP)
+        lword A[8]; // A[8] acts as the System Stack Pointer (SP), it doesn't matter what SP is active, it always contains the SP
     } GPR;
     
     lword PC; // 32-bit Program Counter
@@ -92,24 +92,27 @@ typedef struct Amiga_3000
 
 typedef struct addressing_modes_arguments
 {
-    byte dn : 3; // data register
-    byte an : 3; // address register
-    byte xnsize : 1; // size of data, 0 for sign extended word, 1 for slword
+    byte reg : 3; // register
+    byte xn_size : 1; // size of data, 0 for sign extended word, 1 for slword
     slword d16; // 16-bit displacement int
     slword d8; // 8-bit displacement int
-    byte xn : 4; // index register, can either be one or zero for address register or data register respectively, and the id of the register
+    byte xn : 3; // index register
+    byte xn_type : 1; // type of index register, can either be one or zero for address register or data register respectively
     byte scale : 2; // can only be 1, 2, 4 or 8
     slword bd; // base displacement, size defined by bits 4 and 5
     slword od; // outer displacement, size defined by IS - I/IS Encodings (Table 2-2 in PRM)
+    lword fw; // format word
     slword ew1; // extension word 1
     slword ew2; // extension word 2
     byte size : 2; // size of operation (in byte), 00 = 1, 01 = 2, 10 = 4, 11 = undefined
-    byte bs : 1; // base register suppress, 1 = suppressed
+    byte bs : 1; // base register suppress, 1 = suppressed, hopefully also works for PC
     byte is : 1; // index register suppress, 1 = suppressed
+    byte IIS : 3; // Index/Indirect for Memory Indirection encodings
+    byte format : 1; // extension word format, 0 for brief, 1 for full
 } AMA;
 
 
-/* not required
+/* NOT REQUIRED
 // Four-Word Stack Frame
 typedef struct stackframe_$0
 {

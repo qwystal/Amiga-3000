@@ -1,3 +1,8 @@
+/*
+    This file includes:
+        - functions to read and write to memory
+*/
+
 #include "typedefs.h"
 
 // Read byte from memory

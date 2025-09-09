@@ -60,14 +60,14 @@ typedef struct MC68030
         word T0 : 1; // Trace mode
         word S : 1; // Supervisor/User state, Indicates active stack pointer
         word M : 1; // Master/Interrupt state, Indicates active stack pointer
-        word ZERO : 1; // Always zero
+        word : 1; // Always zero
         word I2 : 1; // Interrupt level 2
         word I1 : 1; // Interrupt level 1
         word I0 : 1; // Interrupt level 0
 
         struct CCR // Condition Code Register
         {
-            word ZERO : 3; // Always zero
+            word : 3; // Always zero
             word X : 1; // Extend flag
             word N : 1; // Negative flag
             word Z : 1; // Zero flag
@@ -84,7 +84,7 @@ typedef struct MC68030
 typedef struct Amiga_3000
 {
     CPU cpu;
-    byte memory[DEFAULT_MEM_SIZE];
+    byte *memory;
     word opcode;
     byte debugLevel;
     word cycles;

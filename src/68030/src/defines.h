@@ -180,8 +180,17 @@
 #define INS_RTD 12
 #define INS_RTS 13
 #define INS_RTR 14
+#define INS_ORI 15
 
 // Exception vectors
-#define EXC_VEC_PRIVILEGE_VIOLATION 8
+#define VEC_ILLEGAL_INSTRUCTION 4
+#define VEC_TRAP_INSTRUCTION 7
+#define VEC_PRIVILEGE_VIOLATION 8
+
+// addressing mode categories
+#define AMC_DATA 1
+#define AMC_MEMORY 2
+#define AMC_CONTROL 4
+#define AMC_ALTERABLE 8
 
 #endif

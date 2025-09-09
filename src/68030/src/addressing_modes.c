@@ -1,12 +1,13 @@
 /*
-    This file includes:
+    This file contains:
         - all eighteen addressing modes
         - the effective address decoder (which selects the addressing mode to use)
 */
 
 #include "typedefs.h"
-#include "memory.c"
-#include "debug.c"
+#include "memory.h"
+#include "debug.h"
+#include "exception.h"
 
 /* this function returns the content of the index register */
 static slword get_index(A3000 *a3000, AMA ama) {
@@ -26,7 +27,7 @@ static slword get_index(A3000 *a3000, AMA ama) {
         {
             xn = a3000->cpu.GPR.D[ama.xn];
         }
-        return ((slword) xn) * ama.scale;
+        return xn * ama.scale;
     }
     else
     {
@@ -135,23 +136,23 @@ static lword memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
 }
 
 static lword program_counter_indirect_with_displacement_mode(A3000 *a3000, AMA ama) {
-    return a3000->cpu.PC + ama.d16; // only allowed for reads?
+    return get_PC(a3000, ama) + ama.d16; // only allowed for reads?
 }
 
 static lword program_counter_indirect_with_index_8bit_displacement_mode(A3000 *a3000, AMA ama) {
-    return ama.d8 + a3000->cpu.PC + get_index(a3000, ama); // signed + unsigned number
+    return ama.d8 + get_PC(a3000, ama) + get_index(a3000, ama); // signed + unsigned number
 }
 
 static lword program_counter_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama) {
-    return a3000->cpu.PC + ama.bd + get_index(a3000, ama);
+    return get_PC(a3000, ama) + ama.bd + get_index(a3000, ama);
 }
 
 static lword program_counter_memory_indirect_postindexed_mode(A3000 *a3000, AMA ama) {
-    return rl_mem(a3000, a3000->cpu.PC + ama.bd) + get_index(a3000, ama) + ama.od;
+    return rl_mem(a3000, get_PC(a3000, ama) + ama.bd) + get_index(a3000, ama) + ama.od;
 }
 
 static lword program_counter_memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
-    return rl_mem(a3000, a3000->cpu.PC + ama.bd + get_index(a3000, ama)) + ama.od;
+    return rl_mem(a3000, get_PC(a3000, ama) + ama.bd + get_index(a3000, ama)) + ama.od;
 }
 
 static lword absolute_short_addressing_mode(A3000 *a3000, AMA ama) {
@@ -178,7 +179,7 @@ static lword immediate_data_mode(A3000 *a3000, AMA ama) {
 
 /* 
     this function returns an
-    (A)ddressing (M)ode (A)rguments struct. 
+    (A)ddressing (M)ode (A)rguments struct. (AMA)
     everything that is needed for the addressing 
     modes to work is set here.
 */
@@ -207,13 +208,29 @@ static AMA get_AMA(A3000 *a3000) {
         switch ((fw >> 4) & 0b11) // find out size of base displacement
         {
             case 0b10:
-                a3000->cpu.PC += 2;
                 ama.bd = (slword) rw_mem(a3000, a3000->cpu.PC);
+                a3000->cpu.PC += 2;
                 break;
 
             case 0b11:
-                a3000->cpu.PC += 4;
                 ama.bd = rl_mem(a3000, a3000->cpu.PC);
+                a3000->cpu.PC += 4;
+                break;
+            
+            default:
+                break;
+        }
+
+        switch (fw & 0b11) // find out size of outer displacement
+        {
+            case 0b10:
+                ama.od = (slword) rw_mem(a3000, a3000->cpu.PC);
+                a3000->cpu.PC += 2;
+                break;
+
+            case 0b11:
+                ama.od = rl_mem(a3000, a3000->cpu.PC);
+                a3000->cpu.PC += 4;
                 break;
             
             default:
@@ -237,115 +254,352 @@ static AMA get_AMA(A3000 *a3000) {
 }
 
 /* this function selects the addressing mode to use and returns the effective address */
-lword get_ea(A3000 *a3000) {
+lword get_ea(A3000 *a3000, byte category) {
     word mode = (a3000->cpu.PC >> 3) & 0b111;
     AMA ama = get_AMA(a3000);
 
-    switch (mode)
+    if (category & 0x1) // data category
     {
-        case 0b000:
-            return data_register_direct_mode(a3000, ama);
-
-        case 0b001:
-            return address_register_direct_mode(a3000, ama);
-
-        case 0b010:
-            return address_register_indirect_mode(a3000, ama);
-
-        case 0b011:
-            return address_register_indirect_with_postincrement_mode(a3000, ama);
-
-        case 0b100:
-            return address_register_indirect_with_predecrement_mode(a3000, ama);
-
-        case 0b101:
-            return address_register_indirect_with_displacement_mode(a3000, ama);
-
-        case 0b110:
-            if (ama.format) // find out the extension word format
-            {
-                switch (ama.fw & 0b111) // find out memory indirection
+        switch (mode)
+        {
+            case 0b000:
+                return data_register_direct_mode(a3000, ama);
+            case 0b010:
+                return address_register_indirect_mode(a3000, ama);
+            case 0b011:
+                return address_register_indirect_with_postincrement_mode(a3000, ama);
+            case 0b100:
+                return address_register_indirect_with_predecrement_mode(a3000, ama);
+            case 0b101:
+                return address_register_indirect_with_displacement_mode(a3000, ama);
+            case 0b110:
+                if (ama.format) // find out the extension word format
                 {
-                        case 0b001:
-                        case 0b010:
-                        case 0b011:
-                            return memory_indirect_preindexed_mode(a3000, ama);
-                            break;
-                    
-                        case 0b101:
-                        case 0b110:
-                        case 0b111:
-                            return memory_indirect_postindexed_mode(a3000, ama);
-                            break;
-
-                        case 0b000:
-                            return address_register_indirect_with_index_base_displacement_mode(a3000, ama);
-                            break;
-                    
-                        default:
-                            break;
+                    switch (ama.fw & 0b111) // find out memory indirection
+                    {
+                            case 0b001:
+                            case 0b010:
+                            case 0b011:
+                                return memory_indirect_preindexed_mode(a3000, ama);
+                                break;
+                            case 0b101:
+                            case 0b110:
+                            case 0b111:
+                                return memory_indirect_postindexed_mode(a3000, ama);
+                                break;
+                            case 0b000:
+                                return address_register_indirect_with_index_base_displacement_mode(a3000, ama);
+                                break;
+                            default:
+                                break;
+                    }
                 }
-            }
-            else
-            {
-                return address_register_indirect_with_index_8bit_mode(a3000, ama);
-            }
-
-        case 0b111:
-            switch (ama.reg) // here the register decides the mode to use
-            {
-                case 0b000:
-                    return absolute_short_addressing_mode(a3000, ama);
-                    break;
-
-                case 0b001:
-                    return absolute_long_addressing_mode(a3000, ama);
-                    break;
-
-                case 0b010:
-                    return program_counter_indirect_with_displacement_mode(a3000, ama);
-                    break;
-
-                case 0b011:
-                    if (ama.format) // find out the extension word format
-                    {
-                        switch (ama.fw & 0b111) // find out memory indirection
+                else
+                {
+                    return address_register_indirect_with_index_8bit_mode(a3000, ama);
+                }
+            case 0b111:
+                switch (ama.reg) // here the register decides the mode to use
+                {
+                    case 0b000:
+                        return absolute_short_addressing_mode(a3000, ama);
+                        break;
+                    case 0b001:
+                        return absolute_long_addressing_mode(a3000, ama);
+                        break;
+                    case 0b010:
+                        return program_counter_indirect_with_displacement_mode(a3000, ama);
+                        break;
+                    case 0b011:
+                        if (ama.format) // find out the extension word format
                         {
-                                case 0b001:
-                                case 0b010:
-                                case 0b011:
-                                    return program_counter_memory_indirect_preindexed_mode(a3000, ama);
-                                    break;
-
-                                case 0b101:
-                                case 0b110:
-                                case 0b111:
-                                    return program_counter_memory_indirect_postindexed_mode(a3000, ama);
-                                    break;
-                        
-                                case 0b000:
-                                    return program_counter_indirect_with_index_base_displacement_mode(a3000, ama);
-                                    break;
-
-                                default:
-                                    break;
+                            switch (ama.fw & 0b111) // find out memory indirection
+                            {
+                                    case 0b001:
+                                    case 0b010:
+                                    case 0b011:
+                                        return program_counter_memory_indirect_preindexed_mode(a3000, ama);
+                                        break;
+                                    case 0b101:
+                                    case 0b110:
+                                    case 0b111:
+                                        return program_counter_memory_indirect_postindexed_mode(a3000, ama);
+                                        break;
+                            
+                                    case 0b000:
+                                        return program_counter_indirect_with_index_base_displacement_mode(a3000, ama);
+                                        break;
+                                    default:
+                                        break;
+                            }
                         }
-                    }
-                    else
-                    {
-                        return program_counter_indirect_with_index_8bit_displacement_mode(a3000, ama);
-                    }
-                    break;
-
-                case 0b100:
-                    return immediate_data_mode(a3000, ama);
-                    break;
-                
-                default:
-                    break;
-            }
-        
-        default:
-            break;
+                        else
+                        {
+                            return program_counter_indirect_with_index_8bit_displacement_mode(a3000, ama);
+                        }
+                        break;
+                    case 0b100:
+                        return immediate_data_mode(a3000, ama);
+                        break;
+                    
+                    default:
+                        break;
+                }
+            
+            default:
+                break;
+        }
     }
-}
+    else if (category & 0x2) // memory category
+    {
+        switch (mode)
+        {
+            case 0b010:
+                return address_register_indirect_mode(a3000, ama);
+            case 0b011:
+                return address_register_indirect_with_postincrement_mode(a3000, ama);
+            case 0b100:
+                return address_register_indirect_with_predecrement_mode(a3000, ama);
+            case 0b101:
+                return address_register_indirect_with_displacement_mode(a3000, ama);
+            case 0b110:
+                if (ama.format) // find out the extension word format
+                {
+                    switch (ama.fw & 0b111) // find out memory indirection
+                    {
+                            case 0b001:
+                            case 0b010:
+                            case 0b011:
+                                return memory_indirect_preindexed_mode(a3000, ama);
+                                break;
+                            case 0b101:
+                            case 0b110:
+                            case 0b111:
+                                return memory_indirect_postindexed_mode(a3000, ama);
+                                break;
+                            case 0b000:
+                                return address_register_indirect_with_index_base_displacement_mode(a3000, ama);
+                                break;
+                            default:
+                                break;
+                    }
+                }
+                else
+                {
+                    return address_register_indirect_with_index_8bit_mode(a3000, ama);
+                }
+            case 0b111:
+                switch (ama.reg) // here the register decides the mode to use
+                {
+                    case 0b000:
+                        return absolute_short_addressing_mode(a3000, ama);
+                        break;
+                    case 0b001:
+                        return absolute_long_addressing_mode(a3000, ama);
+                        break;
+                    case 0b010:
+                        return program_counter_indirect_with_displacement_mode(a3000, ama);
+                        break;
+                    case 0b011:
+                        if (ama.format) // find out the extension word format
+                        {
+                            switch (ama.fw & 0b111) // find out memory indirection
+                            {
+                                    case 0b001:
+                                    case 0b010:
+                                    case 0b011:
+                                        return program_counter_memory_indirect_preindexed_mode(a3000, ama);
+                                        break;
+                                    case 0b101:
+                                    case 0b110:
+                                    case 0b111:
+                                        return program_counter_memory_indirect_postindexed_mode(a3000, ama);
+                                        break;
+                            
+                                    case 0b000:
+                                        return program_counter_indirect_with_index_base_displacement_mode(a3000, ama);
+                                        break;
+                                    default:
+                                        break;
+                            }
+                        }
+                        else
+                        {
+                            return program_counter_indirect_with_index_8bit_displacement_mode(a3000, ama);
+                        }
+                        break;
+                    case 0b100:
+                        return immediate_data_mode(a3000, ama);
+                        break;
+                    
+                    default:
+                        break;
+                }
+            
+            default:
+                break;
+        }
+    }
+    else if (category & 0x4) // control category
+    {
+        switch (mode)
+        {
+            case 0b010:
+                return address_register_indirect_mode(a3000, ama);
+            case 0b101:
+                return address_register_indirect_with_displacement_mode(a3000, ama);
+            case 0b110:
+                if (ama.format) // find out the extension word format
+                {
+                    switch (ama.fw & 0b111) // find out memory indirection
+                    {
+                            case 0b001:
+                            case 0b010:
+                            case 0b011:
+                                return memory_indirect_preindexed_mode(a3000, ama);
+                                break;
+                            case 0b101:
+                            case 0b110:
+                            case 0b111:
+                                return memory_indirect_postindexed_mode(a3000, ama);
+                                break;
+                            case 0b000:
+                                return address_register_indirect_with_index_base_displacement_mode(a3000, ama);
+                                break;
+                            default:
+                                break;
+                    }
+                }
+                else
+                {
+                    return address_register_indirect_with_index_8bit_mode(a3000, ama);
+                }
+            case 0b111:
+                switch (ama.reg) // here the register decides the mode to use
+                {
+                    case 0b000:
+                        return absolute_short_addressing_mode(a3000, ama);
+                        break;
+                    case 0b001:
+                        return absolute_long_addressing_mode(a3000, ama);
+                        break;
+                    case 0b010:
+                        return program_counter_indirect_with_displacement_mode(a3000, ama);
+                        break;
+                    case 0b011:
+                        if (ama.format) // find out the extension word format
+                        {
+                            switch (ama.fw & 0b111) // find out memory indirection
+                            {
+                                    case 0b001:
+                                    case 0b010:
+                                    case 0b011:
+                                        return program_counter_memory_indirect_preindexed_mode(a3000, ama);
+                                        break;
+                                    case 0b101:
+                                    case 0b110:
+                                    case 0b111:
+                                        return program_counter_memory_indirect_postindexed_mode(a3000, ama);
+                                        break;
+                            
+                                    case 0b000:
+                                        return program_counter_indirect_with_index_base_displacement_mode(a3000, ama);
+                                        break;
+                                    default:
+                                        break;
+                            }
+                        }
+                        else
+                        {
+                            return program_counter_indirect_with_index_8bit_displacement_mode(a3000, ama);
+                        }
+                        break;
+                    
+                    default:
+                        break;
+                }
+            
+            default:
+                break;
+        }
+    }
+    else if (category & 0x8) // alterable category
+    {
+        switch (mode)
+        {
+            case 0b000:
+                return data_register_direct_mode(a3000, ama);
+            case 0b001:
+                return address_register_direct_mode(a3000, ama);
+            case 0b010:
+                return address_register_indirect_mode(a3000, ama);
+            case 0b011:
+                return address_register_indirect_with_postincrement_mode(a3000, ama);
+            case 0b100:
+                return address_register_indirect_with_predecrement_mode(a3000, ama);
+            case 0b101:
+                return address_register_indirect_with_displacement_mode(a3000, ama);
+            case 0b110:
+                if (ama.format) // find out the extension word format
+                {
+                    switch (ama.fw & 0b111) // find out memory indirection
+                    {
+                            case 0b001:
+                            case 0b010:
+                            case 0b011:
+                                return memory_indirect_preindexed_mode(a3000, ama);
+                                break;
+                            case 0b101:
+                            case 0b110:
+                            case 0b111:
+                                return memory_indirect_postindexed_mode(a3000, ama);
+                                break;
+                            case 0b000:
+                                return address_register_indirect_with_index_base_displacement_mode(a3000, ama);
+                                break;
+                            default:
+                                break;
+                    }
+                }
+                else
+                {
+                    return address_register_indirect_with_index_8bit_mode(a3000, ama);
+                }
+            case 0b111:
+                switch (ama.reg) // here the register decides the mode to use
+                {
+                    case 0b011:
+                        if (ama.format) // find out the extension word format
+                        {
+                            switch (ama.fw & 0b111) // find out memory indirection
+                            {
+                                    case 0b001:
+                                    case 0b010:
+                                    case 0b011:
+                                        return program_counter_memory_indirect_preindexed_mode(a3000, ama);
+                                        break;
+                                    case 0b101:
+                                    case 0b110:
+                                    case 0b111:
+                                        return program_counter_memory_indirect_postindexed_mode(a3000, ama);
+                                        break;
+                            
+                                    default:
+                                        break;
+                            }
+                        }
+                        break;
+                    
+                    default:
+                        break;
+                }
+            
+            default:
+                break;
+        }
+    }
+    else
+    {
+        exception(a3000, VEC_ILLEGAL_INSTRUCTION);
+    }
+}   

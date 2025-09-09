@@ -1,5 +1,5 @@
 /*
-    This file includes:
+    This file contains:
         - functions to read and write to memory
 */
 

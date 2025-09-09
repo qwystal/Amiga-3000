@@ -7,3 +7,5 @@
 - addressing modes, cast slword to lword at read mem operation?
 - use PC instead of a3000->opcode
 - make it a ring 1 or 0 hypervisor (it cant be that hard, can it?)
+- specific addressing mode types, e.g. data alterable
+- get_ea horrendously slow

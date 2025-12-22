@@ -1,3 +1,5 @@
+- wx_ptr() and rx_ptr() BOUNDS CHECKING
+
 - NOP
 - call TRAP at privilege violation exception
 - implement STOP

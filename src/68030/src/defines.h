@@ -1,9 +1,24 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define BYTE_MAX 0xFF
+#define WORD_MAX 0xFFFF
+#define LWORD_MAX 0xFFFFFFFF
+#define QWORD_MAX 0xFFFFFFFFFFFFFFFF
+
 #define MAX_MEM_SIZE 0xFFFFFFFF // 4 GB
 #define DEFAULT_MEM_SIZE 0x0200000 // 2 MB (configured as 1 MB "chip" and 1 MB "fast" RAM)
 
+#define SET_V a3000->cpu.SR.CCR.V = 1
+#define SET_C a3000->cpu.SR.CCR.C = 1
+#define SET_Z a3000->cpu.SR.CCR.Z = 1
+#define SET_N a3000->cpu.SR.CCR.N = 1
+#define SET_X a3000->cpu.SR.CCR.X = 1
+#define CLEAR_V a3000->cpu.SR.CCR.V = 0
+#define CLEAR_C a3000->cpu.SR.CCR.C = 0
+#define CLEAR_Z a3000->cpu.SR.CCR.Z = 0
+#define CLEAR_N a3000->cpu.SR.CCR.N = 0
+#define CLEAR_X a3000->cpu.SR.CCR.X = 0
 // cpu pins
 // function code signals
 #define FC0 0
@@ -179,8 +194,99 @@
 #define INS_RTE 11
 #define INS_RTD 12
 #define INS_RTS 13
-#define INS_RTR 14
-#define INS_ORI 15
+#define INS_TRAPV 14
+#define INS_RTR 15
+#define INS_CAS2 16
+#define INS_CAS 17
+#define INS_CHK2_CMP2 18
+#define INS_ORI 19
+#define INS_ANDI 20
+#define INS_SUBI 21
+#define INS_ADDI 22
+#define INS_EORI 23
+#define INS_CMPI 24
+#define INS_BTST 25
+#define INS_BCHG 26
+#define INS_BCLR 27
+#define INS_BSET 28
+#define INS_MOVES 29
+#define INS_MOVEP 30
+#define INS_MOVEA 31
+#define INS_MOVE 32
+#define INS_MOVE_FROM_SR 33
+#define INS_NEGX 34
+#define INS_MOVE_FROM_CCR 35
+#define INS_CLR 36
+#define INS_MOVE_TO_CCR 37
+#define INS_NEG 38
+#define INS_MOVE_TO_SR 39
+#define INS_NOT 40
+#define INS_EXT 41
+#define INS_NBCD 42
+#define INS_SWAP 43
+#define INS_BKPT 44
+#define INS_PEA 45
+#define INS_TAS 46
+#define INS_TST 47
+#define INS_DIVSL_DIVUL 48
+#define INS_TRAP 49
+#define INS_LINK 50
+#define INS_UNLK 51
+#define INS_MOVE_USP 52
+#define INS_MOVEC 53
+#define INS_JMP 54
+#define INS_JSR 55
+#define INS_MOVEM 56
+#define INS_LEA 57
+#define INS_CHK 58
+#define INS_DBCC 59
+#define INS_TRAPCC 60
+#define INS_SCC 61
+#define INS_SUBQ 62
+#define INS_ADDQ 63
+#define INS_BRA 64
+#define INS_BSR 65
+#define INS_BCC 66
+#define INS_MOVEQ 67
+#define INS_PACK 68
+#define INS_UNPK 69
+#define INS_DIVU 70
+#define INS_DIVS 71
+#define INS_SBCD 72
+#define INS_OR 73
+#define INS_SUBA 74
+#define INS_SUBX 75
+#define INS_SUB 76
+#define INS_CMPA 77
+#define INS_CMPM 78
+#define INS_EOR 79
+#define INS_CMP 80
+#define INS_MULU 81
+#define INS_MULS 82
+#define INS_ABCD 83
+#define INS_EXG 84
+#define INS_AND 85
+#define INS_ADDA 86
+#define INS_ADDX 87
+#define INS_ADD 88
+#define INS_ASD 89
+#define INS_LSD 90
+#define INS_ROXD 91
+#define INS_ROD 92
+#define INS_BFFFO_BFEXTU 93
+#define INS_BFEXTS 94
+#define INS_BFINS 95
+#define INS_BFTST 96
+#define INS_BFCHG 97
+#define INS_BFCLR 98
+#define INS_BFSET 99
+#define INS_P 100
+#define INS_CPGEN 101
+#define INS_CPDBCC 102
+#define INS_CPTRAPCC 103
+#define INS_CPSCC 104
+#define INS_CPSAVE 105
+#define INS_CPRESTORE 106
 
 // Exception vectors
 #define VEC_ILLEGAL_INSTRUCTION 4
@@ -192,5 +298,6 @@
 #define AMC_MEMORY 2
 #define AMC_CONTROL 4
 #define AMC_ALTERABLE 8
+#define AMC_ALL 16
 
 #endif

@@ -7,6 +7,8 @@
 #include "debug.h"
 #include "addressing_modes.h"
 
+static word get_SR(A3000 *a3000);
+
 void write_esf(A3000 *a3000, word format, word vector) { // write stack exception frame
     
     
@@ -34,12 +36,12 @@ void write_esf(A3000 *a3000, word format, word vector) { // write stack exceptio
 void exception(A3000 *a3000, word vector) {
     switch (vector)
     {
-    case VEC_ILLEGAL_INSTRUCTION:
-        write_esf(a3000, 0, VEC_ILLEGAL_INSTRUCTION);
-        // illegal instruction edge cases!
-        break;
+        case VEC_ILLEGAL_INSTRUCTION:
+            write_esf(a3000, 0, VEC_ILLEGAL_INSTRUCTION);
+            // illegal instruction edge cases!
+            break;
     
-    default:
-        break;
+        default:
+            break;
     }
 }

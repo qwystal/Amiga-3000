@@ -102,8 +102,8 @@ typedef struct addressing_modes_arguments
     slword bd; // base displacement, size defined by bits 4 and 5
     slword od; // outer displacement, size defined by IS - I/IS Encodings (Table 2-2 in PRM)
     lword fw; // format word
-    slword ew1; // extension word 1
-    slword ew2; // extension word 2
+    lword ew1; // extension word 1
+    lword ew2; // extension word 2
     byte size : 2; // size of operation (in byte), 00 = 1, 01 = 2, 10 = 4, 11 = undefined
     byte bs : 1; // base register suppress, 1 = suppressed, hopefully also works for PC
     byte is : 1; // index register suppress, 1 = suppressed

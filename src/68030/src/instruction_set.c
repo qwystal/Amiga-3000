@@ -19,7 +19,7 @@
 */
 
 /* get the value of the Status Register */
-static word get_SR(A3000 *a3000) 
+word get_SR(A3000 *a3000) 
 {
     word SR = 0;
     SR |= a3000->cpu.SR.CCR.C;
@@ -38,7 +38,7 @@ static word get_SR(A3000 *a3000)
 }
 
 /* set the value of the Status Register */
-static void set_SR(A3000 *a3000, word SR) 
+void set_SR(A3000 *a3000, word SR) 
 {
     a3000->cpu.SR.CCR.C = (SR & 0x01);
     a3000->cpu.SR.CCR.V = !!(SR & 0x02);
@@ -55,7 +55,7 @@ static void set_SR(A3000 *a3000, word SR)
 }
 
 /* get the value of the Condition Code Register (the operation flags reside there) */
-static word get_CCR(A3000 *a3000) { 
+word get_CCR(A3000 *a3000) { 
     word CCR = 0;
     CCR |= a3000->cpu.SR.CCR.C;
     CCR |= (a3000->cpu.SR.CCR.V << 1);
@@ -66,21 +66,13 @@ static word get_CCR(A3000 *a3000) {
 }
 
 /* set the value of the Condition Code Register (the operation flags reside there) */
-static void set_CCR(A3000 *a3000, word CCR) { 
+void set_CCR(A3000 *a3000, word CCR) { 
     a3000->cpu.SR.CCR.C = (CCR & 0x01);
     a3000->cpu.SR.CCR.V = !!(CCR & 0x02);
     a3000->cpu.SR.CCR.Z = !!(CCR & 0x04);
     a3000->cpu.SR.CCR.N = !!(CCR & 0x08);
     a3000->cpu.SR.CCR.X = !!(CCR & 0x10);
 }
-
-/* 
-
-    this giant mess basically just splits the opcode into chunks and uses them
-    to find a specific instruction, which then gets called.
-    (this doesn't look elegant to me)
-
-*/
 
 /* here begins the implementation of the actual instructions */
 
@@ -89,7 +81,7 @@ void signal(word signal) {
 }
 
 static sword call_TRAP(A3000 *a3000) {
-    return 0;
+    return INS_TRAP;
 }
 
 static sword call_ORI_to_CCR(A3000 *a3000) {
@@ -362,7 +354,7 @@ static sword call_TRAPV(A3000 *a3000) {
         call_TRAP(a3000);
     }
 
-    return;
+    return INS_TRAPV;
 }
 
 static sword call_RTR(A3000 *a3000) {
@@ -380,366 +372,512 @@ static sword call_ORI(A3000 *a3000) {
 }
 
 static sword call_CAS2(A3000 *a3000) {
-    return 0;
+    return INS_CAS2;
 }
 
 static sword call_CAS(A3000 *a3000) {
-    return 0;
+    return INS_CAS;
 }
 
 static sword call_CHK2_CMP2(A3000 *a3000) {
-    return 0;
+    return INS_CHK2_CMP2;
 }
 
 static sword call_ANDI(A3000 *a3000) {
-    return 0;
+    return INS_ANDI;
 }
 
 static sword call_SUBI(A3000 *a3000) {
-    return 0;
+    return INS_SUBI;
 }
 
 static sword call_ADDI(A3000 *a3000) {
-    return 0;
+    return INS_ADDI;
 }
 
 static sword call_EORI(A3000 *a3000) {
-    return 0;
+    return INS_EORI;
 }
 
 static sword call_CMPI(A3000 *a3000) {
-    return 0;
+    return INS_CMPI;
 }
 
 static sword call_BTST(A3000 *a3000) {
-    return 0;
+    return INS_BTST;
 }
 
 static sword call_BCHG(A3000 *a3000) {
-    return 0;
+    return INS_BCHG;
 }
 
 static sword call_BCLR(A3000 *a3000) {
-    return 0;
+    return INS_BCLR;
 }
 
 static sword call_BSET(A3000 *a3000) {
-    return 0;
+    return INS_BSET;
 }
 
 static sword call_MOVES(A3000 *a3000) {
-    return 0;
+    return INS_MOVES;
 }
 
 static sword call_MOVEP(A3000 *a3000) {
-    return 0;
+    return INS_MOVEP;
 }
 
 static sword call_MOVEA(A3000 *a3000) {
-    return 0;
+    return INS_MOVEA;
 }
 
 static sword call_MOVE(A3000 *a3000) {
-    return 0;
+    return INS_MOVE;
 }
 
 static sword call_MOVE_from_SR(A3000 *a3000) {
-    return 0;
+    return INS_MOVE_FROM_SR;
 }
 
 static sword call_NEGX(A3000 *a3000) {
-    return 0;
+    return INS_NEGX;
 }
 
 static sword call_MOVE_from_CCR(A3000 *a3000) {
-    return 0;
+    return INS_MOVE_FROM_CCR;
 }
 
 static sword call_CLR(A3000 *a3000) {
-    return 0;
+    return INS_CLR;
 }
 
 static sword call_MOVE_to_CCR(A3000 *a3000) {
-    return 0;
+    return INS_MOVE_TO_CCR;
 }
 
 static sword call_NEG(A3000 *a3000) {
-    return 0;
+    return INS_NEG;
 }
 
 static sword call_MOVE_to_SR(A3000 *a3000) {
-    return 0;
+    return INS_MOVE_TO_SR;
 }
 
 static sword call_NOT(A3000 *a3000) {
-    return 0;
+    return INS_NOT;
 }
 
 static sword call_EXT(A3000 *a3000) {
-    return 0;
+    return INS_EXT;
 }
 
 static sword call_NBCD(A3000 *a3000) {
-    return 0;
+    return INS_NBCD;
 }
 
 static sword call_SWAP(A3000 *a3000) {
-    return 0;
+    return INS_SWAP;
 }
 
 static sword call_BKPT(A3000 *a3000) {
-    return 0;
+    return INS_BKPT;
 }
 
 static sword call_PEA(A3000 *a3000) {
-    return 0;
+    return INS_PEA;
 }
 
 static sword call_TAS(A3000 *a3000) {
-    return 0;
+    return INS_TAS;
 }
 
 static sword call_TST(A3000 *a3000) {
-    return 0;
+    return INS_TST;
 }
 
 static sword call_DIVSL_DIVUL(A3000 *a3000) {
-    return 0;
+    return INS_DIVSL_DIVUL;
 }
 
 static sword call_LINK(A3000 *a3000) {
-    return 0;
+    return INS_LINK;
 }
 
 static sword call_UNLK(A3000 *a3000) {
-    return 0;
+    return INS_UNLK;
 }
 
 static sword call_MOVE_USP(A3000 *a3000) {
-    return 0;
+    return INS_MOVE_USP;
 }
 
 static sword call_MOVEC(A3000 *a3000) {
-    return 0;
+    return INS_MOVEC;
 }
 
 static sword call_JMP(A3000 *a3000) {
-    return 0;
+    return INS_JMP;
 }
 
 static sword call_JSR(A3000 *a3000) {
-    return 0;
+    return INS_JSR;
 }
 
 static sword call_MOVEM(A3000 *a3000) {
-    return 0;
+    return INS_MOVEM;
 }
 
 static sword call_LEA(A3000 *a3000) {
-    return 0;
+    return INS_LEA;
 }
 
 static sword call_CHK(A3000 *a3000) {
-    return 0;
+    return INS_CHK;
 }
 
 static sword call_DBcc(A3000 *a3000) {
-    return 0;
+    return INS_DBCC;
 }
 
 static sword call_TRAPcc(A3000 *a3000) {
-    return 0;
+    return INS_TRAPCC;
 }
 
 static sword call_Scc(A3000 *a3000) {
-    return 0;
+    return INS_SCC;
 }
 
 static sword call_SUBQ(A3000 *a3000) {
-    return 0;
+    return INS_SUBQ;
 }
 
 static sword call_ADDQ(A3000 *a3000) {
-    return 0;
+    return INS_ADDQ;
 }
 
 static sword call_BRA(A3000 *a3000) {
-    return 0;
+    return INS_BRA;
 }
 
 static sword call_BSR(A3000 *a3000) {
-    return 0;
+    return INS_BSR;
 }
 
 static sword call_Bcc(A3000 *a3000) {
-    return 0;
+    return INS_BCC;
 }
 
 static sword call_MOVEQ(A3000 *a3000) {
-    return 0;
+    return INS_MOVEQ;
 }
 
 static sword call_PACK(A3000 *a3000) {
-    return 0;
+    return INS_PACK;
 }
 
 static sword call_UNPK(A3000 *a3000) {
-    return 0;
+    return INS_UNPK;
 }
 
 static sword call_DIVU(A3000 *a3000) {
-    return 0;
+    return INS_DIVU;
 }
 
 static sword call_DIVS(A3000 *a3000) {
-    return 0;
+    return INS_DIVS;
 }
 
 static sword call_SBCD(A3000 *a3000) {
-    return 0;
+    return INS_SBCD;
 }
 
 static sword call_OR(A3000 *a3000) {
-    return 0;
+    return INS_OR;
 }
 
 static sword call_SUBA(A3000 *a3000) {
-    return 0;
+    return INS_SUBA;
 }
 
 static sword call_SUBX(A3000 *a3000) {
-    return 0;
+    return INS_SUBX;
 }
 
 static sword call_SUB(A3000 *a3000) {
-    return 0;
+    return INS_SUB;
 }
 
 static sword call_CMPA(A3000 *a3000) {
-    return 0;
+    return INS_CMPA;
 }
 
 static sword call_CMPM(A3000 *a3000) {
-    return 0;
+    return INS_CMPM;
 }
 
 static sword call_EOR(A3000 *a3000) {
-    return 0;
+    return INS_EOR;
 }
 
 static sword call_CMP(A3000 *a3000) {
-    return 0;
+    return INS_CMP;
 }
 
 static sword call_MULU(A3000 *a3000) {
-    return 0;
+    return INS_MULU;
 }
 
 static sword call_MULS(A3000 *a3000) {
-    return 0;
+    return INS_MULS;
 }
 
 static sword call_ABCD(A3000 *a3000) {
-    return 0;
+    return INS_ABCD;
 }
 
 static sword call_EXG(A3000 *a3000) {
-    return 0;
+    return INS_EXG;
 }
 
 static sword call_AND(A3000 *a3000) {
-    return 0;
+    return INS_AND;
 }
 
 static sword call_ADDA(A3000 *a3000) {
-    return 0;
+    return INS_ADDA;
 }
 
 static sword call_ADDX(A3000 *a3000) {
-    return 0;
+    return INS_ADDX;
 }
 
 static sword call_ADD(A3000 *a3000) {
-    
+    a3000->cpu.PC += 2;
 
-    // set flag
-    return 0;
+    word opmode = (a3000->opcode >> 6) & 0b111;
+    byte *ea = NULL;
+    byte reg = (a3000->opcode >> 9) & 0b111;
+    qword result = 0;
+    lword a = 0;
+    lword b = 0;
+
+    switch (opmode)
+    {
+        case 0b000:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rb_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = a + b;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((result & a) == a) // set flag if a carry happened
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            else 
+            {
+                SET_C;
+                SET_X;
+            }
+            
+            a3000->cpu.GPR.D[reg] = result;
+            break; // not finished
+
+        case 0b100:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rb_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = a + b;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((result & a) == a) // set flag if a carry happened
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            else 
+            {
+                SET_C;
+                SET_X;
+            }
+            
+            wb_ptr(ea, (byte) result);
+            break;
+
+        case 0b101:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rw_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = a + b;
+
+            if (result & 0x10000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+
+            if ((result & a) == a) // set flag if a carry happened
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            else 
+            {
+                SET_C;
+                SET_X;
+            }
+            
+            ww_ptr(ea, (word) result);
+            break;
+
+        case 0b110:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rl_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = a + b;
+
+            if (result & 0x100000000) // look for overflow
+                SET_V; 
+            else 
+                CLEAR_V;
+
+            if (result == 0) // check if result is 0
+                SET_Z; 
+            else 
+                CLEAR_Z;
+
+            if (result & 0x80000000) // look for MSB to see if result is negative
+                SET_N; 
+            else 
+                CLEAR_N;
+            
+            if ((result & a) == a) // set flag if a carry happened
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            else 
+            {
+                SET_C;
+                SET_X;
+            }
+            
+            wl_ptr(ea, (lword) result);
+            break;
+        
+        default:
+            return -INS_ADD;
+            break;
+    }
+
+
+    return INS_ADD;
 }
 
 static sword call_ASd(A3000 *a3000) {
-    return 0;
+    return INS_ASD;
 }
 
 static sword call_LSd(A3000 *a3000) {
-    return 0;
+    return INS_LSD;
 }
 
 static sword call_ROXd(A3000 *a3000) {
-    return 0;
+    return INS_ROXD;
 }
 
 static sword call_ROd(A3000 *a3000) {
-    return 0;
+    return INS_ROD;
 }
 
 static sword call_BFFFO_BFEXTU(A3000 *a3000) {
-    return 0;
+    return INS_BFFFO_BFEXTU;
 }
 
 static sword call_BFEXTS(A3000 *a3000) {
-    return 0;
+    return INS_BFEXTS;
 }
 
 static sword call_BFINS(A3000 *a3000) {
-    return 0;
+    return INS_BFINS;
 }
 
 static sword call_BFTST(A3000 *a3000) {
-    return 0;
+    return INS_BFTST;
 }
 
 static sword call_BFCHG(A3000 *a3000) {
-    return 0;
+    return INS_BFCHG;
 }
 
 static sword call_BFCLR(A3000 *a3000) {
-    return 0;
+    return INS_BFCLR;
 }
 
 static sword call_BFSET(A3000 *a3000) {
-    return 0;
+    return INS_BFSET;
 }
 
 static sword call_P(A3000 *a3000) {
-    return 0;
+    return INS_P;
 }
 
 static sword call_cpGEN(A3000 *a3000) {
-    return 0;
+    return INS_CPGEN;
 }
 
 static sword call_cpDBcc(A3000 *a3000) {
-    return 0;
+    return INS_CPDBCC;
 }
 
 static sword call_cpTRAPcc(A3000 *a3000) {
-    return 0;
+    return INS_CPTRAPCC;
 }
 
 static sword call_cpScc(A3000 *a3000) {
-    return 0;
+    return INS_CPSCC;
 }
 
 static sword call_cpSAVE(A3000 *a3000) {
-    return 0;
+    return INS_CPSAVE;
 }
 
 static sword call_cpRESTORE(A3000 *a3000) {
-    return 0;
+    return INS_CPRESTORE;
 }
 
+/* 
+
+    this giant mess basically just splits the opcode into chunks and uses them
+    to find a specific instruction, which then gets called.
+    (this doesn't look elegant to me)
+
+*/
 sword look_up_instruction(A3000 *a3000) {
-    a3000->opcode = rw_mem(a3000, a3000->cpu.PC);
     word chunk_1 = (a3000->opcode >> 12) & 0b1111; // Extract the 1st-4th bits
     word chunk_2 = (a3000->opcode >> 9) & 0b111; // Extract the 5th-7th bits
     word chunk_3 = (a3000->opcode >> 8) & 0b1; // Extract the 8th bit
@@ -751,7 +889,7 @@ sword look_up_instruction(A3000 *a3000) {
     word chunk_5_5 = (a3000->opcode >> 3) & 0b11; // Extract the 11th and 12th bits
     // isnt it the other way around, the 1st bit is 12th and so on? lol
     // return after every call?
-    
+
     switch (a3000->opcode) // Switch-statement for completely pre-defined a3000->opcodes
     {
         case 0b0000000000111100:
@@ -1441,12 +1579,9 @@ sword look_up_instruction(A3000 *a3000) {
                 default:
                     break;
             }
-            
-
-        default:
-            exception(a3000, VEC_ILLEGAL_INSTRUCTION);
-            break;
     }
 
-    return a3000->opcode;
+    exception(a3000, VEC_ILLEGAL_INSTRUCTION);
+    
+    return 4;
 }

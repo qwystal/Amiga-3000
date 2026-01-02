@@ -18,8 +18,23 @@ void success(const char *msg) {
     tests++;
 }
 
-void test_instructions() {
+void test_instructions(A3000 *a3000) {
     size_t counter = 0;
+
+    for (size_t i = 0; i < (0xFFFF + 1); i++)
+    {
+        a3000->opcode = i;
+        if (look_up_instruction(a3000) != 4)
+        {
+            counter++;
+        }
+    }
+    
+    ASSERT(counter == 59128, "Instruction Decoder");
+
+}
+
+int main(int argc, char **argv) {
     A3000 a3000 = { 0 };
     a3000.memory = malloc(MAX_MEM_SIZE);
 
@@ -28,22 +43,9 @@ void test_instructions() {
     a_reg_min = (byte *) &a3000.cpu.GPR.A[0];
     mem_size = MAX_MEM_SIZE;
 
-    for (size_t i = 0; i < (0xFFFF + 1); i++)
-    {
-        a3000.opcode = i;
-        if (look_up_instruction(&a3000) != 4)
-        {
-            counter++;
-        }
-    }
-    
-    ASSERT(counter == 59128, "Instruction Decoder");
-}
+    test_instructions(&a3000);
 
-int main(int argc, char **argv) {
-    test_instructions();
-    
-    
+    free(a3000.memory);
     
     return 0;
 }

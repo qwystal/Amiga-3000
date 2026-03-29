@@ -1,22 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "../src/instruction_set.h"
 #include "unit_test.h"
 
 size_t errors = 0;
 size_t tests = 0;
-
-void error(const char *msg) {
-    printf("%s [  %serror%s  ]\n", msg, COLOR_RED, COLOR_RESET);
-    tests++;
-    errors++;
-}
-
-void success(const char *msg) {
-    printf("%s [  %sok%s  ]\n", msg, COLOR_GREEN, COLOR_RESET);
-    tests++;
-}
 
 void test_instructions(A3000 *a3000) {
     size_t counter = 0;
@@ -35,6 +25,16 @@ void test_instructions(A3000 *a3000) {
 }
 
 int main(int argc, char **argv) {
+
+    for (int i = 0; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--suppress-errors") == 0)
+        {
+            suppress_errors = 1;
+        }
+    }
+    
+
     A3000 a3000 = { 0 };
     a3000.memory = malloc(MAX_MEM_SIZE);
 
@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
     mem_size = MAX_MEM_SIZE;
 
     test_instructions(&a3000);
+    printf("error count: %lld\n", internal_error);
 
     free(a3000.memory);
     

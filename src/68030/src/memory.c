@@ -67,7 +67,8 @@ byte rb_ptr(byte *address)
         return (byte) *address;
     else
         error("out of bounds memory access");
-        return 0;
+    
+    return 0;
 }
 
 // Read word behind a pointer, could be register or memory

@@ -1122,7 +1122,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x80) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1150,7 +1150,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x8000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1177,7 +1177,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1197,8 +1197,7 @@ static sword call_SUBX(A3000 *a3000) {
     }
     else
     {
-        AMA ama;
-        ama = get_AMA(&ama);
+        AMA ama = get_AMA(a3000); 
 
         a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
 
@@ -1224,7 +1223,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x80) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1252,7 +1251,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x8000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1279,7 +1278,7 @@ static sword call_SUBX(A3000 *a3000) {
                 if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
 
-                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || ((b ^ a3000->cpu.SR.CCR.X) & (a & 0b1)) != b) // set flag if a borrow happened
                 {
                     SET_C;
                     SET_X;
@@ -1693,8 +1692,7 @@ static sword call_ADDX(A3000 *a3000) {
     }
     else
     {
-        AMA ama;
-        ama = get_AMA(&ama);
+        AMA ama = get_AMA(a3000);
 
         a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
 

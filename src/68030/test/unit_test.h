@@ -10,9 +10,12 @@
 #define ASSERT(x, msg) \
 if (x) {\
     success(msg);\
+    tests++;\
 }\
 else {\
     error(msg);\
+    tests++;\
+    errors++;\
 }\
 
 

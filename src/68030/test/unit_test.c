@@ -21,7 +21,7 @@ void success(const char *msg) {
 void test_instructions(A3000 *a3000) {
     size_t counter = 0;
 
-    for (size_t i = 0; i < (0xFFFF + 1); i++)
+    for (size_t i = 0; i <= 0xFFFF; i++)
     {
         a3000->opcode = i;
         if (look_up_instruction(a3000) != 4)

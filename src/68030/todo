@@ -11,3 +11,5 @@
 - make it a ring 1 or 0 hypervisor (it cant be that hard, can it?)
 - specific addressing mode types, e.g. data alterable
 - get_ea horrendously slow
+- overflow flag set at overflowing out of bounds or overflowing into MSB?
+- operation involving registers change only the affected bits; the rest of the registers remains unchanged

@@ -1,48 +1,13 @@
 #include <stdio.h>
 
-#include "typedefs.h"
+#define COLOR_RED "\x1b[31m"
+#define COLOR_GREEN "\x1b[32m"
+#define COLOR_RESET "\x1b[0m"
 
-void logError(const char *msg, const A3000 a3000) {
-    switch (a3000.debugLevel)
-    {
-        case 0x1:
-            printf("Error: %s\n", msg);
-            break;
-        
-        case 0x0:
-            break;
-
-        default:
-            break;
-    }
+void error(const char *msg) {
+    printf("%serror:%s %s\n", COLOR_RED, COLOR_RESET, msg);
 }
 
-void logInfo(const char *msg, const A3000 a3000) {
-    switch (a3000.debugLevel)
-    {
-        case 0x1:
-            printf("Info: %s\n", msg);
-            break;
-        
-        case 0x0:
-            break;
-
-        default:
-            break;
-    }
-}
-
-void logSuccess(const char *msg, const A3000 a3000) {
-    switch (a3000.debugLevel)
-    {
-        case 0x1:
-            printf("Success: %s\n", msg);
-            break;
-        
-        case 0x0:
-            break;
-
-        default:
-            break;
-    }
+void info(const char *msg) {
+    printf("info: %s\n", msg);
 }

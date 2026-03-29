@@ -254,7 +254,7 @@ static sword call_RESET(A3000 *a3000) {
 static sword call_NOP(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
-    // NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline
+    // "NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline"
 
     return INS_NOP;
 }
@@ -317,7 +317,7 @@ static sword call_RTE(A3000 *a3000) {
             break;
         
         default:
-            logError("Unsupported Stack Exception Frame", *a3000);
+            error("Unsupported Stack Exception Frame");
             break;
     }
 
@@ -388,6 +388,114 @@ static sword call_ANDI(A3000 *a3000) {
 }
 
 static sword call_SUBI(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    word size = (a3000->opcode >> 6) & 0b11;
+    byte *ea = NULL;
+    qword result = 0;
+    lword a = 0;
+    lword b = 0;
+
+    switch (size)
+    {
+        case 0b00:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rb_ptr(ea);
+            b = rb_mem(a3000, a3000->cpu.PC);
+            a3000->cpu.PC += 2;
+            result = a - b;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((a | b) != a) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wb_ptr(ea, (byte) result);
+            break;
+
+        case 0b01:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rw_ptr(ea);
+            b = rw_mem(a3000, a3000->cpu.PC);
+            a3000->cpu.PC += 2;
+            result = a - b;
+
+            if (result & 0x10000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((a | b) != a) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            ww_ptr(ea, (word) result);
+            break;
+
+        case 0b10:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rl_ptr(ea);
+            b = rl_mem(a3000, a3000->cpu.PC);
+            a3000->cpu.PC += 4;
+            result = a - b;
+
+            if (result & 0x100000000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((a | b) != a) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wl_ptr(ea, (lword) result);
+            break;
+
+        default:
+            return -INS_SUBI;
+            break;
+    }
+    
     return INS_SUBI;
 }
 
@@ -656,6 +764,125 @@ static sword call_Scc(A3000 *a3000) {
 }
 
 static sword call_SUBQ(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    word size = (a3000->opcode >> 6) & 0b11;
+    byte mode = (a3000->opcode >> 3) & 0b111;
+    byte *ea = NULL;
+    qword result = 0;
+    lword a = (a3000->opcode >> 9) & 0b111;
+
+    if (a == 0) 
+        a = 8;
+        
+    lword b = 0;
+
+    switch (size)
+    {
+        case 0b00:
+            if (mode == 1)
+                return -INS_ADDQ;
+            
+            ea = get_ea(a3000, AMC_ALTERABLE);
+            b = rb_ptr(ea);
+            result = b - a;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wb_ptr(ea, (byte) result);
+            break;
+
+        case 0b01:
+            ea = get_ea(a3000, AMC_ALTERABLE);
+            b = rw_ptr(ea);
+            result = b - a;
+
+            if (mode == 1) // destination is the address register
+            {
+                wl_ptr(ea, (lword) result); // the entire address register is always written to, and CCR is ignored
+                break;
+            }
+
+            if (result & 0x10000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            ww_ptr(ea, (word) result);
+            break;
+
+        case 0b10:
+            ea = get_ea(a3000, AMC_ALTERABLE);
+            b = rl_ptr(ea);
+            result = a - b;
+
+            if (mode == 1) // destination is the address register
+            {
+                wl_ptr(ea, (lword) result); // the entire address register is always written to, and CCR is ignored
+                break;
+            }
+
+            if (result & 0x100000000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wl_ptr(ea, (lword) result);
+            break;
+        
+        default:
+            return -INS_SUBQ;
+            break;
+    }
+
     return INS_SUBQ;
 }
 
@@ -713,7 +940,7 @@ static sword call_ADDQ(A3000 *a3000) {
 
             if (mode == 1) // destination is the address register
             {
-                wl_ptr(ea, (lword) result); // the entire address register is always written to
+                wl_ptr(ea, (lword) result); // the entire address register is always written to, and CCR is ignored
                 break;
             }
 
@@ -747,7 +974,7 @@ static sword call_ADDQ(A3000 *a3000) {
 
             if (mode == 1) // destination is the address register
             {
-                wl_ptr(ea, (lword) result); // the entire address register is always written to
+                wl_ptr(ea, (lword) result); // the entire address register is always written to, and CCR is ignored
                 break;
             }
 
@@ -823,14 +1050,462 @@ static sword call_OR(A3000 *a3000) {
 }
 
 static sword call_SUBA(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    word opmode = (a3000->opcode >> 6) & 0b111;
+    byte *ea = NULL;
+    byte reg = (a3000->opcode >> 9) & 0b111;
+    qword result = 0;
+    lword a = 0;
+    lword b = 0;
+
+    switch (opmode)
+    {
+        case 0b011:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rw_ptr(ea);
+            b = a3000->cpu.GPR.A[reg];
+            result = b - a;
+            
+            a3000->cpu.GPR.A[reg] = result;
+            break;
+
+        case 0b111:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rl_ptr(ea);
+            b = a3000->cpu.GPR.A[reg];
+            result = b - a;
+            
+            a3000->cpu.GPR.A[reg] = result;
+            break;
+
+        default:
+            return -INS_SUBA;
+            break;
+    }
+
     return INS_SUBA;
 }
 
 static sword call_SUBX(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
+    byte size = (a3000->opcode >> 6) & 0b11;
+    lword a = 0;
+    lword b = 0;
+    qword result = 0;
+
+    byte regx = (a3000->opcode >> 9) & 0b111;
+    byte regy = a3000->opcode & 0b111;
+
+    if (rm == 0)
+    {
+        a = a3000->cpu.GPR.D[regx];
+        b = a3000->cpu.GPR.D[regy];
+
+        switch (size)
+        {
+            case 0b00:
+                a &= 0xFF; // since its a byte operation, 8 bits are required
+                b &= 0xFF;
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                a3000->cpu.GPR.D[regx] = (byte) result;
+                break;
+
+            case 0b01:
+                a &= 0xFFFF; // since its a word operation, 16 bits are required
+                b &= 0xFFFF;
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x10000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                a3000->cpu.GPR.D[regx] = (word) result;
+                break;
+
+            case 0b10:
+                // no masking required, regx and regy are lword
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100000000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                a3000->cpu.GPR.D[regx] = (lword) result;
+                break;
+            
+            default:
+                break;
+        }
+    }
+    else
+    {
+        AMA ama;
+        ama = get_AMA(&ama);
+
+        a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
+
+        ama.reg = regx; // manually setting the register to Rx, since get_AMA() only uses the first 3 bits
+
+        byte *dest_ptr = address_register_indirect_with_predecrement_mode(a3000, ama);
+        b = rl_ptr(dest_ptr); // register Rx
+
+        switch (size)
+        {
+
+            case 0b00:
+                a &= 0xFF; // since its a byte operation, 8 bits are required
+                b &= 0xFF;
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                wb_ptr(dest_ptr, (byte) result);
+                break;
+
+            case 0b01:
+                a &= 0xFFFF; // since its a word operation, 16 bits are required
+                b &= 0xFFFF;
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x10000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                ww_ptr(dest_ptr, (word) result);
+                break;
+
+            case 0b10:
+                // no masking required, regx and regy are lword
+
+                result = b - a - a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100000000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((b | a) != b || (b | a3000->cpu.SR.CCR.X) != b || (b ^ a3000->cpu.SR.CCR.X) & (a & 0b1) != b) // set flag if a borrow happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                wl_ptr(dest_ptr, (lword) result);
+                break;
+            
+            default:
+                break;
+        }
+    }
+    
+
     return INS_SUBX;
 }
 
 static sword call_SUB(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    word opmode = (a3000->opcode >> 6) & 0b111;
+    byte *ea = NULL;
+    byte reg = (a3000->opcode >> 9) & 0b111;
+    qword result = 0;
+    lword a = 0;
+    lword b = 0;
+
+    switch (opmode)
+    {
+        case 0b000:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rb_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            a3000->cpu.GPR.D[reg] = result;
+            break;
+
+        case 0b001:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rw_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x10000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            a3000->cpu.GPR.D[reg] = result;
+            break;
+
+        case 0b010:
+            ea = get_ea(a3000, AMC_ALL);
+
+            a = rl_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x100000000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            a3000->cpu.GPR.D[reg] = result;
+            break;
+
+        case 0b100:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rb_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x100) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x80) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wb_ptr(ea, (byte) result);
+            break;
+
+        case 0b101:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rw_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x10000) SET_V; // look for overflow
+            else CLEAR_V;
+
+            if (result == 0) SET_Z; // check if result is 0
+            else CLEAR_Z;
+
+            if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+            else CLEAR_N;
+
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            ww_ptr(ea, (word) result);
+            break;
+
+        case 0b110:
+            ea = get_ea(a3000, AMC_DATA);
+
+            a = rl_ptr(ea);
+            b = a3000->cpu.GPR.D[reg];
+            result = b - a;
+
+            if (result & 0x100000000) // look for overflow
+                SET_V; 
+            else 
+                CLEAR_V;
+
+            if (result == 0) // check if result is 0
+                SET_Z; 
+            else 
+                CLEAR_Z;
+
+            if (result & 0x80000000) // look for MSB to see if result is negative
+                SET_N; 
+            else 
+                CLEAR_N;
+            
+            if ((b | a) != b) // set flag if a borrow happened
+            {
+                SET_C;
+                SET_X;
+            }
+            else 
+            {
+                CLEAR_C;
+                CLEAR_X;
+            }
+            
+            wl_ptr(ea, (lword) result);
+            break;
+        
+        default:
+            return -INS_SUB;
+            break;
+    }
+
+
     return INS_SUB;
 }
 
@@ -913,13 +1588,14 @@ static sword call_ADDA(A3000 *a3000) {
 static sword call_ADDX(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
-    byte regx = (a3000->opcode >> 9) & 0b111;
-    byte regy = a3000->opcode & 0b111;
     byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
     byte size = (a3000->opcode >> 6) & 0b11;
     lword a = 0;
     lword b = 0;
     qword result = 0;
+
+    byte regx = (a3000->opcode >> 9) & 0b111;
+    byte regy = a3000->opcode & 0b111;
 
     if (rm == 0)
     {
@@ -937,7 +1613,7 @@ static sword call_ADDX(A3000 *a3000) {
                 if (result & 0x100) SET_V; // look for overflow
                 else CLEAR_V;
 
-                if (result) CLEAR_Z; // check if result is non-zero
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
 
                 if (result & 0x80) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
@@ -965,7 +1641,7 @@ static sword call_ADDX(A3000 *a3000) {
                 if (result & 0x10000) SET_V; // look for overflow
                 else CLEAR_V;
 
-                if (result) CLEAR_Z; // check if result is non-zero
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
 
                 if (result & 0x8000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
@@ -992,7 +1668,7 @@ static sword call_ADDX(A3000 *a3000) {
                 if (result & 0x100000000) SET_V; // look for overflow
                 else CLEAR_V;
 
-                if (result) CLEAR_Z; // check if result is non-zero
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
 
                 if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
                 else CLEAR_N;
@@ -1018,7 +1694,104 @@ static sword call_ADDX(A3000 *a3000) {
     else
     {
         AMA ama;
-        address_register_indirect_with_predecrement_mode(a3000, ama); // not finished
+        ama = get_AMA(&ama);
+
+        a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
+
+        ama.reg = regx; // manually setting the register to Rx, since get_AMA() only uses the first 3 bits
+
+        byte *dest_ptr = address_register_indirect_with_predecrement_mode(a3000, ama);
+        b = rl_ptr(dest_ptr); // register Rx
+
+        switch (size)
+        {
+
+            case 0b00:
+                a &= 0xFF; // since its a byte operation, 8 bits are required
+                b &= 0xFF;
+
+                result = a + b + a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((a & b) || (a & a3000->cpu.SR.CCR.X) || (b & a3000->cpu.SR.CCR.X)) // set flag if a carry happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                wb_ptr(dest_ptr, (byte) result);
+                break;
+
+            case 0b01:
+                a &= 0xFFFF; // since its a word operation, 16 bits are required
+                b &= 0xFFFF;
+
+                result = a + b + a3000->cpu.SR.CCR.X;
+
+                if (result & 0x10000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x8000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((a & b) || (a & a3000->cpu.SR.CCR.X) || (b & a3000->cpu.SR.CCR.X)) // set flag if a carry happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                ww_ptr(dest_ptr, (word) result);
+                break;
+
+            case 0b10:
+                // no masking required, regx and regy are lword
+
+                result = a + b + a3000->cpu.SR.CCR.X;
+
+                if (result & 0x100000000) SET_V; // look for overflow
+                else CLEAR_V;
+
+                if (result) CLEAR_Z; // check if result is non-zero, doesn't need to be set
+
+                if (result & 0x80000000) SET_N; // look for MSB to see if result is negative
+                else CLEAR_N;
+
+                if ((a & b) || (a & a3000->cpu.SR.CCR.X) || (b & a3000->cpu.SR.CCR.X)) // set flag if a carry happened
+                {
+                    SET_C;
+                    SET_X;
+                }
+                else 
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                wl_ptr(dest_ptr, (lword) result);
+                break;
+            
+            default:
+                break;
+        }
     }
     
 

@@ -16,7 +16,7 @@ typedef int64_t sqword; // signed 64-bit (quad word)
 
 typedef struct MC68030
 {   
-    byte pin[13]; // signal pins, only 101 out of the 104 (8 * 13) needed
+    byte pin[13]; // signal pins, only 101 bits out of the 104 bits (8 bit * 13) are needed
 
     struct GPR // 32-bit General Purpose Registers
     {

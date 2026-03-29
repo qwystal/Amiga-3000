@@ -73,6 +73,8 @@ static slword get_PC(A3000 *a3000, AMA ama) {
     since I began this project, the worst experience was writing 
     the eighteen addressing modes 
     - (23/07/2025)
+
+    they are only returning addresses to the required data!
 */
 static byte *data_register_direct_mode(A3000 *a3000, AMA ama)
 {
@@ -185,12 +187,15 @@ static byte *immediate_data_mode(A3000 *a3000, AMA ama) {
     this function returns an
     (A)ddressing (M)ode (A)rguments struct. (AMA)
     everything that is needed for the addressing 
-    modes to work is set here.
+    modes to work is set here. It will always set
+    every possible argument, even though some aren't
+    needed for every addressing mode.
 */
 static AMA get_AMA(A3000 *a3000) {
     word reg = a3000->opcode & 0b111;
-    word fw = rw_mem(a3000, a3000->cpu.PC); // format word
-    a3000->cpu.PC += 2;
+    word fw = a3000->opcode;
+    //word fw = rw_mem(a3000, a3000->cpu.PC); // format word  PREVIOUS VERSION
+    //a3000->cpu.PC += 2;
 
     if ((fw >> 8) & 0b1) // if it's brief or full format
     {
@@ -257,8 +262,8 @@ static AMA get_AMA(A3000 *a3000) {
     }
 }
 
-/* this function selects the addressing mode to use and returns the effective address */
-// use the AMC_XXXXX defines for the category
+/* this function selects the addressing mode to use and returns the effective address (a pointer!) */
+// use the AMC_XXXXX defines for the category of addressing modes
 byte *get_ea(A3000 *a3000, byte category) {
     word mode = (a3000->opcode >> 3) & 0b111;
     AMA ama = get_AMA(a3000);

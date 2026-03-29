@@ -4,6 +4,7 @@
 */
 
 #include "typedefs.h"
+#include "debug.h"
 
 byte *d_reg_min = NULL;
 byte *a_reg_min = NULL;
@@ -65,6 +66,7 @@ byte rb_ptr(byte *address)
     if ((address >= d_reg_min && address < (d_reg_min + 32)) || (address >= a_reg_min && address < (a_reg_min + 32)) || (address >= mem_min && address < (mem_min + mem_size)))
         return (byte) *address;
     else
+        error("out of bounds memory access");
         return 0;
 }
 

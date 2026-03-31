@@ -50,7 +50,20 @@ typedef struct MC68030
     
     lword TT1; // 32-bit Transprent Translation Register
 
-    word MMUSR; // 16-bit MMU Status Register
+    struct MMUSR 
+    {
+        byte B : 1; // bus error
+        byte L : 1; // limit violation
+        byte S : 1; // supervisor-only
+        byte : 1;   // always zero
+        byte W : 1; // write-protected
+        byte I : 1; // invalid
+        byte M : 1; // modified
+        byte : 2;   // always zero
+        byte T : 1; // transparent access
+        byte : 3;   // always zero
+        byte N : 3; // number of levels
+    }; // 16-bit MMU Status Register
 
     lword USP; // 32-bit User Stack Pointer
 
@@ -86,6 +99,7 @@ typedef struct Amiga_3000
     CPU cpu;
     byte *memory;
     word opcode;
+    word rom_opcode;
     byte debugLevel;
     word cycles;
 } A3000;
@@ -110,6 +124,12 @@ typedef struct addressing_modes_arguments
     byte IIS : 3; // Index/Indirect for Memory Indirection encodings
     byte format : 1; // extension word format, 0 for brief, 1 for full
 } AMA;
+
+typedef enum error_type {
+    MEMORY_ACCESS_VIOLATION,
+    UNSUPPORTED_SEF,
+    ASSERT_FAILURE
+} error_type;
 
 
 /* NOT REQUIRED

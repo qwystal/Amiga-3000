@@ -13,7 +13,7 @@ if (x) {\
     tests++;\
 }\
 else {\
-    error(msg);\
+    error(ASSERT_FAILURE);\
     tests++;\
     errors++;\
 }\

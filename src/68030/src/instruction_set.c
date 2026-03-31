@@ -317,7 +317,7 @@ static sword call_RTE(A3000 *a3000) {
             break;
         
         default:
-            error("Unsupported Stack Exception Frame");
+            error(UNSUPPORTED_SEF);
             break;
     }
 
@@ -648,6 +648,80 @@ static sword call_MOVEA(A3000 *a3000) {
 }
 
 static sword call_MOVE(A3000 *a3000) {
+    a3000->cpu.PC += 2; 
+
+    CLEAR_C;
+    CLEAR_V;
+
+    byte size = a3000->opcode >> 12; // no need to mask (look opcode)
+
+    lword source;
+    byte *destination;
+
+    switch (size)
+    {
+        case 0b01: // byte
+            source = rb_ptr(get_ea(a3000, AMC_ALL));
+
+            if (source)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (source < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->opcode = ((a3000->opcode >> 9) & 0b111) | (a3000->opcode >> 3); // changes the opcode into the desired format for get_ea()
+            destination = get_ea(a3000, AMC_DATA);
+
+            wb_ptr(destination, (byte) source);
+            break;
+
+        case 0b10: // lword
+            source = rl_ptr(get_ea(a3000, AMC_ALL));
+
+            if (source)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (source < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->opcode = ((a3000->opcode >> 9) & 0b111) | (a3000->opcode >> 3); // changes the opcode into the desired format for get_ea()
+            destination = get_ea(a3000, AMC_DATA);
+
+            wl_ptr(destination, source);
+            break;
+
+        case 0b11: // word
+            source = rw_ptr(get_ea(a3000, AMC_ALL));
+
+            if (source)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (source < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->opcode = ((a3000->opcode >> 9) & 0b111) | (a3000->opcode >> 3); // changes the opcode into the desired format for get_ea()
+            destination = get_ea(a3000, AMC_DATA);
+
+            ww_ptr(destination, (word) source);
+            break;
+        
+        default:
+            return -INS_MOVE;
+            break;
+    }
+
     return INS_MOVE;
 }
 
@@ -684,6 +758,56 @@ static sword call_NOT(A3000 *a3000) {
 }
 
 static sword call_EXT(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    CLEAR_C;
+    CLEAR_V;
+
+    byte reg = a3000->opcode & 0b111;
+    byte opmode = (a3000->opcode >> 6) & 0b111;
+
+    slword result;
+
+    switch (opmode)
+    {
+        case 0b010: // S-e byte to word
+            result = (sword) ((sbyte) (a3000->cpu.GPR.D[reg]));
+
+            if (!result)
+                SET_Z;
+            if (result < 0)
+                SET_N;
+
+            a3000->cpu.GPR.D[reg] |= (sword) result;
+            break;
+
+        case 0b011: // S-e word to long
+            result = (slword) ((sword) (a3000->cpu.GPR.D[reg]));
+
+            if (!result)
+                SET_Z;
+            if (result < 0)
+                SET_N;
+
+            a3000->cpu.GPR.D[reg] |= result;
+            break;
+
+        case 0b111: // S-e byte to long
+            result = (slword) ((sbyte) (a3000->cpu.GPR.D[reg]));
+
+            if (!result)
+                SET_Z;
+            if (result < 0)
+                SET_N;
+
+            a3000->cpu.GPR.D[reg] |= result;
+            break;
+        
+        default:
+            return -INS_EXT;
+            break;
+    }
+
     return INS_EXT;
 }
 
@@ -716,6 +840,25 @@ static sword call_DIVSL_DIVUL(A3000 *a3000) {
 }
 
 static sword call_LINK(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    byte reg = a3000->opcode & 0b111;
+
+    a3000->cpu.GPR.A[7] -= 4;
+    wl_mem(a3000, a3000->cpu.GPR.A[7], a3000->cpu.GPR.A[reg]);
+    a3000->cpu.GPR.A[7] = a3000->cpu.GPR.A[reg];
+
+    if ((a3000->opcode >> 3) & 0b1) // if it's long format
+    {
+        a3000->cpu.GPR.A[7] += rl_mem(a3000, a3000->cpu.PC);
+        a3000->cpu.PC += 4;
+    }
+    else // it's word format
+    {
+        a3000->cpu.GPR.A[7] += rw_mem(a3000, a3000->cpu.PC);
+        a3000->cpu.PC += 2;
+    }
+
     return INS_LINK;
 }
 
@@ -732,10 +875,18 @@ static sword call_MOVEC(A3000 *a3000) {
 }
 
 static sword call_JMP(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+    a3000->cpu.PC = get_virt_addr(get_ea(a3000, AMC_CONTROL)); // get difference between pointer
+
     return INS_JMP;
 }
 
 static sword call_JSR(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+    a3000->cpu.GPR.A[7] -= 4;
+    wl_mem(a3000, a3000->cpu.GPR.A[7], a3000->cpu.PC);
+    a3000->cpu.PC = get_virt_addr(get_ea(a3000, AMC_CONTROL));
+
     return INS_JSR;
 }
 
@@ -744,6 +895,12 @@ static sword call_MOVEM(A3000 *a3000) {
 }
 
 static sword call_LEA(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    byte reg = (a3000->opcode >> 9) & 0b111;
+
+    a3000->cpu.GPR.A[reg] = get_virt_addr(get_ea(a3000, AMC_CONTROL));
+
     return INS_LEA;
 }
 
@@ -2008,6 +2165,259 @@ static sword call_ASd(A3000 *a3000) {
 }
 
 static sword call_LSd(A3000 *a3000) {
+    a3000->cpu.PC += 2;
+
+    CLEAR_V;
+
+    byte shift_count;
+    byte reg_or_count = (a3000->opcode >> 9) & 0b111;
+    byte size = (a3000->opcode >> 6) & 0b11;
+    byte reg = a3000->opcode & 0b111;
+    byte direction = (a3000->opcode >> 8) & 0b1;
+
+    if ((a3000->opcode >> 5) & 0b1)
+    {
+        shift_count = a3000->cpu.GPR.D[reg_or_count] % 64;
+    }
+    else
+    {
+        if (reg_or_count)
+            shift_count = reg_or_count;
+        else
+            shift_count = 8;
+    }
+
+    lword result;
+    
+    switch (size)
+    {
+        case 0b00: // byte
+            result = (byte) a3000->cpu.GPR.D[reg];
+
+            if (!shift_count)
+            {
+                CLEAR_C;
+            }
+            else
+            {
+                if (direction) // shift left if 1
+                {
+                    result = result << (shift_count - 1);
+
+                    if ((result >> (shift_count - 1)) & 1)
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result << 1;
+                }
+                else
+                {
+                    result = result >> (shift_count - 1);
+
+                    if (result & 1) 
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result >> 1;
+                }
+            }
+
+            if (result)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (result < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->cpu.GPR.D[reg] |= result;
+            break;
+
+        case 0b01: // word
+            result = (word) a3000->cpu.GPR.D[reg];
+
+            if (!shift_count)
+            {
+                CLEAR_C;
+            }
+            else
+            {
+                if (direction) // shift left if 1
+                {
+                    result = result << (shift_count - 1);
+
+                    if ((result >> (shift_count - 1)) & 1)
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result << 1;
+                }
+                else
+                {
+                    result = result >> (shift_count - 1);
+
+                    if (result & 1) 
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result >> 1;
+                }
+            }
+
+            if (result)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (result < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->cpu.GPR.D[reg] |= result;
+            break;
+
+        case 0b10: // long
+            lword result = a3000->cpu.GPR.D[reg];
+
+            if (!shift_count)
+            {
+                CLEAR_C;
+            }
+            else
+            {
+                if (direction) // shift left if 1
+                {
+                    result = result << (shift_count - 1);
+
+                    if ((result >> (shift_count - 1)) & 1)
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result << 1;
+                }
+                else
+                {
+                    result = result >> (shift_count - 1);
+
+                    if (result & 1) 
+                    {
+                        SET_X;
+                        SET_C;
+                    }
+                    else
+                    {
+                        CLEAR_C;
+                        CLEAR_X;
+                    }
+
+                    result = result >> 1;
+                }
+            }
+
+            if (result)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (result < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            a3000->cpu.GPR.D[reg] |= result;
+            break;
+
+        case 0b11: // memory
+            byte *ea = get_ea(a3000, AMC_ALTERABLE);
+            result = rw_ptr(ea);
+
+            if (direction) // shift left if 1
+            {
+                if ((result >> 15) & 1)
+                {
+                    SET_X;
+                    SET_C;
+                }
+                else
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                result = result << 1;
+            }
+            else
+            {
+                if (result & 1) 
+                {
+                    SET_X;
+                    SET_C;
+                }
+                else
+                {
+                    CLEAR_C;
+                    CLEAR_X;
+                }
+
+                result = result >> 1;
+            }
+
+            if (result)
+                CLEAR_Z;
+            else
+                SET_Z;
+
+            if (result < 0)
+                SET_N;
+            else
+                CLEAR_N;
+
+            ww_ptr(ea, (word) result);
+            break;
+        
+        default:
+            return -INS_LSD;
+            break;
+    }
+
     return INS_LSD;
 }
 
@@ -2356,7 +2766,14 @@ sword look_up_instruction(A3000 *a3000) {
                     }
                     else if (chunk_4 == 0b00)
                     {
-                        return call_NBCD(a3000);
+                        if (chunk_5 == 0b001)
+                        {
+                            return call_LINK(a3000);
+                        }
+                        else
+                        {
+                            return call_NBCD(a3000);
+                        }
                         break;
                     }
                     else if (chunk_4 == 0b01)

@@ -193,9 +193,8 @@ static byte *immediate_data_mode(A3000 *a3000, AMA ama) {
 */
 static AMA get_AMA(A3000 *a3000) {
     word reg = a3000->opcode & 0b111;
-    word fw = a3000->opcode;
-    //word fw = rw_mem(a3000, a3000->cpu.PC); // format word  PREVIOUS VERSION
-    //a3000->cpu.PC += 2;
+    word fw = rw_mem(a3000, a3000->cpu.PC); // format word 
+    a3000->cpu.PC += 2;
 
     if ((fw >> 8) & 0b1) // if it's brief or full format
     {

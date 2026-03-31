@@ -44,7 +44,30 @@ int main(int argc, char **argv) {
     mem_size = MAX_MEM_SIZE;
 
     test_instructions(&a3000);
-    printf("error count: %lld\n", internal_error);
+
+    if (internal_error)
+    {
+        printf("\nError count details:\n");
+        printf("=========================\n\n");
+
+        for (size_t i = 0; i < 3; i++)
+        {
+            if (error_types[i])
+            {
+                printf("%s%s%s   :   %lld\n", COLOR_RED, error_msgs[i], COLOR_RESET, error_types[i]);
+            }
+        }
+
+        printf("\n=========================\n");
+        printf("Total error count: %lld", internal_error);
+    }
+    else
+    {
+        printf("\n%sRan without errors.%s", COLOR_GREEN, COLOR_RESET);
+    }
+    
+    
+    
 
     free(a3000.memory);
     

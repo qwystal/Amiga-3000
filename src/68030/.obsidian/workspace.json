@@ -20,21 +20,8 @@
               "icon": "lucide-file",
               "title": "readme"
             }
-          },
-          {
-            "id": "09971e516b9b93ee",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.11.5"
-              },
-              "icon": "lucide-book-up",
-              "title": "Release Notes 1.11.5"
-            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -196,7 +183,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "09971e516b9b93ee",
+  "active": "5aa17cee56d2d78a",
   "lastOpenFiles": [
     "doc/readme.md",
     "doc",

@@ -1,4 +1,5 @@
 - wx_ptr() and rx_ptr() BOUNDS CHECKING
+- implement the memory map and access restrictions in it (i.e. ROM)
 
 - NOP
 - call TRAP at privilege violation exception

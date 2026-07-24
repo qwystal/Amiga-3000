@@ -5,17 +5,17 @@
 */
 
 #include <stdio.h>
-
 #include "typedefs.h"
-#include "instruction_set.h"
-
+#include "defines.h"
 #include "memory.h"
 #include "debug.h"
 #include "addressing_modes.h"
+#include "exception.h"
 
 /*  
-    I put static on all the function that aren't intended 
+    I put on all the function that aren't intended 
     to be used by C files that include this file to hide them
+    edit: I don't know why I did this
 */
 
 /* get the value of the Status Register */
@@ -80,11 +80,11 @@ void signal(word signal) {
 
 }
 
-static sword call_TRAP(A3000 *a3000) {
+sword call_TRAP(A3000 *a3000) {
     return INS_TRAP;
 }
 
-static sword call_ORI_to_CCR(A3000 *a3000) {
+sword call_ORI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -105,7 +105,7 @@ static sword call_ORI_to_CCR(A3000 *a3000) {
     return INS_ORI_TO_CCR;
 }
 
-static sword call_ORI_to_SR(A3000 *a3000) {
+sword call_ORI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -133,7 +133,7 @@ static sword call_ORI_to_SR(A3000 *a3000) {
     return INS_ORI_TO_SR;
 }
 
-static sword call_ANDI_to_CCR(A3000 *a3000) {
+sword call_ANDI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -154,7 +154,7 @@ static sword call_ANDI_to_CCR(A3000 *a3000) {
     return INS_ANDI_TO_CCR;
 }
 
-static sword call_ANDI_to_SR(A3000 *a3000) {
+sword call_ANDI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -182,7 +182,7 @@ static sword call_ANDI_to_SR(A3000 *a3000) {
     return INS_ANDI_TO_SR;
 }
 
-static sword call_EORI_to_CCR(A3000 *a3000) {
+sword call_EORI_to_CCR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -203,7 +203,7 @@ static sword call_EORI_to_CCR(A3000 *a3000) {
     return INS_EORI_TO_CCR;
 }
 
-static sword call_EORI_to_SR(A3000 *a3000) {
+sword call_EORI_to_SR(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -231,13 +231,13 @@ static sword call_EORI_to_SR(A3000 *a3000) {
     return INS_EORI_TO_SR;
 }
 
-static sword call_ILLEGAL(A3000 *a3000) {
+sword call_ILLEGAL(A3000 *a3000) {
     exception(a3000, VEC_ILLEGAL_INSTRUCTION);
 
     return INS_ILLEGAL;
 }
 
-static sword call_RESET(A3000 *a3000) {
+sword call_RESET(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -251,7 +251,7 @@ static sword call_RESET(A3000 *a3000) {
     return INS_RESET;
 }
 
-static sword call_NOP(A3000 *a3000) {
+sword call_NOP(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     // "NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline"
@@ -259,7 +259,7 @@ static sword call_NOP(A3000 *a3000) {
     return INS_NOP;
 }
 
-static sword call_STOP(A3000 *a3000) {
+sword call_STOP(A3000 *a3000) {
     a3000->cpu.PC += 2;
     if (!a3000->cpu.SR.S)
     {
@@ -273,7 +273,7 @@ static sword call_STOP(A3000 *a3000) {
     return INS_STOP;
 }
 
-static sword call_RTE(A3000 *a3000) {
+sword call_RTE(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -324,7 +324,7 @@ static sword call_RTE(A3000 *a3000) {
     return INS_RTE;
 }
 
-static sword call_RTD(A3000 *a3000) {
+sword call_RTD(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     slword displacement = (slword) rw_mem(a3000, a3000->cpu.PC);
@@ -336,7 +336,7 @@ static sword call_RTD(A3000 *a3000) {
     return INS_RTD;
 }
 
-static sword call_RTS(A3000 *a3000) {
+sword call_RTS(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
@@ -345,7 +345,7 @@ static sword call_RTS(A3000 *a3000) {
     return INS_RTS;
 }
 
-static sword call_TRAPV(A3000 *a3000) {
+sword call_TRAPV(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     if (a3000->cpu.SR.CCR.V)
@@ -357,7 +357,7 @@ static sword call_TRAPV(A3000 *a3000) {
     return INS_TRAPV;
 }
 
-static sword call_RTR(A3000 *a3000) {
+sword call_RTR(A3000 *a3000) {
     set_CCR(a3000, rw_mem(a3000, a3000->cpu.GPR.A[7]));
     a3000->cpu.GPR.A[7] += 2;
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
@@ -366,28 +366,28 @@ static sword call_RTR(A3000 *a3000) {
     return INS_RTR;
 }
 
-static sword call_ORI(A3000 *a3000) {
+sword call_ORI(A3000 *a3000) {
 
     return INS_ORI;
 }
 
-static sword call_CAS2(A3000 *a3000) {
+sword call_CAS2(A3000 *a3000) {
     return INS_CAS2;
 }
 
-static sword call_CAS(A3000 *a3000) {
+sword call_CAS(A3000 *a3000) {
     return INS_CAS;
 }
 
-static sword call_CHK2_CMP2(A3000 *a3000) {
+sword call_CHK2_CMP2(A3000 *a3000) {
     return INS_CHK2_CMP2;
 }
 
-static sword call_ANDI(A3000 *a3000) {
+sword call_ANDI(A3000 *a3000) {
     return INS_ANDI;
 }
 
-static sword call_SUBI(A3000 *a3000) {
+sword call_SUBI(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -499,7 +499,7 @@ static sword call_SUBI(A3000 *a3000) {
     return INS_SUBI;
 }
 
-static sword call_ADDI(A3000 *a3000) {
+sword call_ADDI(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -611,43 +611,43 @@ static sword call_ADDI(A3000 *a3000) {
     return INS_ADDI;
 }
 
-static sword call_EORI(A3000 *a3000) {
+sword call_EORI(A3000 *a3000) {
     return INS_EORI;
 }
 
-static sword call_CMPI(A3000 *a3000) {
+sword call_CMPI(A3000 *a3000) {
     return INS_CMPI;
 }
 
-static sword call_BTST(A3000 *a3000) {
+sword call_BTST(A3000 *a3000) {
     return INS_BTST;
 }
 
-static sword call_BCHG(A3000 *a3000) {
+sword call_BCHG(A3000 *a3000) {
     return INS_BCHG;
 }
 
-static sword call_BCLR(A3000 *a3000) {
+sword call_BCLR(A3000 *a3000) {
     return INS_BCLR;
 }
 
-static sword call_BSET(A3000 *a3000) {
+sword call_BSET(A3000 *a3000) {
     return INS_BSET;
 }
 
-static sword call_MOVES(A3000 *a3000) {
+sword call_MOVES(A3000 *a3000) {
     return INS_MOVES;
 }
 
-static sword call_MOVEP(A3000 *a3000) {
+sword call_MOVEP(A3000 *a3000) {
     return INS_MOVEP;
 }
 
-static sword call_MOVEA(A3000 *a3000) {
+sword call_MOVEA(A3000 *a3000) {
     return INS_MOVEA;
 }
 
-static sword call_MOVE(A3000 *a3000) {
+sword call_MOVE(A3000 *a3000) {
     a3000->cpu.PC += 2; 
 
     CLEAR_C;
@@ -725,39 +725,39 @@ static sword call_MOVE(A3000 *a3000) {
     return INS_MOVE;
 }
 
-static sword call_MOVE_from_SR(A3000 *a3000) {
+sword call_MOVE_from_SR(A3000 *a3000) {
     return INS_MOVE_FROM_SR;
 }
 
-static sword call_NEGX(A3000 *a3000) {
+sword call_NEGX(A3000 *a3000) {
     return INS_NEGX;
 }
 
-static sword call_MOVE_from_CCR(A3000 *a3000) {
+sword call_MOVE_from_CCR(A3000 *a3000) {
     return INS_MOVE_FROM_CCR;
 }
 
-static sword call_CLR(A3000 *a3000) {
+sword call_CLR(A3000 *a3000) {
     return INS_CLR;
 }
 
-static sword call_MOVE_to_CCR(A3000 *a3000) {
+sword call_MOVE_to_CCR(A3000 *a3000) {
     return INS_MOVE_TO_CCR;
 }
 
-static sword call_NEG(A3000 *a3000) {
+sword call_NEG(A3000 *a3000) {
     return INS_NEG;
 }
 
-static sword call_MOVE_to_SR(A3000 *a3000) {
+sword call_MOVE_to_SR(A3000 *a3000) {
     return INS_MOVE_TO_SR;
 }
 
-static sword call_NOT(A3000 *a3000) {
+sword call_NOT(A3000 *a3000) {
     return INS_NOT;
 }
 
-static sword call_EXT(A3000 *a3000) {
+sword call_EXT(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     CLEAR_C;
@@ -811,35 +811,35 @@ static sword call_EXT(A3000 *a3000) {
     return INS_EXT;
 }
 
-static sword call_NBCD(A3000 *a3000) {
+sword call_NBCD(A3000 *a3000) {
     return INS_NBCD;
 }
 
-static sword call_SWAP(A3000 *a3000) {
+sword call_SWAP(A3000 *a3000) {
     return INS_SWAP;
 }
 
-static sword call_BKPT(A3000 *a3000) {
+sword call_BKPT(A3000 *a3000) {
     return INS_BKPT;
 }
 
-static sword call_PEA(A3000 *a3000) {
+sword call_PEA(A3000 *a3000) {
     return INS_PEA;
 }
 
-static sword call_TAS(A3000 *a3000) {
+sword call_TAS(A3000 *a3000) {
     return INS_TAS;
 }
 
-static sword call_TST(A3000 *a3000) {
+sword call_TST(A3000 *a3000) {
     return INS_TST;
 }
 
-static sword call_DIVSL_DIVUL(A3000 *a3000) {
+sword call_DIVSL_DIVUL(A3000 *a3000) {
     return INS_DIVSL_DIVUL;
 }
 
-static sword call_LINK(A3000 *a3000) {
+sword call_LINK(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     byte reg = a3000->opcode & 0b111;
@@ -862,26 +862,26 @@ static sword call_LINK(A3000 *a3000) {
     return INS_LINK;
 }
 
-static sword call_UNLK(A3000 *a3000) {
+sword call_UNLK(A3000 *a3000) {
     return INS_UNLK;
 }
 
-static sword call_MOVE_USP(A3000 *a3000) {
+sword call_MOVE_USP(A3000 *a3000) {
     return INS_MOVE_USP;
 }
 
-static sword call_MOVEC(A3000 *a3000) {
+sword call_MOVEC(A3000 *a3000) {
     return INS_MOVEC;
 }
 
-static sword call_JMP(A3000 *a3000) {
+sword call_JMP(A3000 *a3000) {
     a3000->cpu.PC += 2;
     a3000->cpu.PC = get_virt_addr(get_ea(a3000, AMC_CONTROL)); // get difference between pointer
 
     return INS_JMP;
 }
 
-static sword call_JSR(A3000 *a3000) {
+sword call_JSR(A3000 *a3000) {
     a3000->cpu.PC += 2;
     a3000->cpu.GPR.A[7] -= 4;
     wl_mem(a3000, a3000->cpu.GPR.A[7], a3000->cpu.PC);
@@ -890,11 +890,11 @@ static sword call_JSR(A3000 *a3000) {
     return INS_JSR;
 }
 
-static sword call_MOVEM(A3000 *a3000) {
+sword call_MOVEM(A3000 *a3000) {
     return INS_MOVEM;
 }
 
-static sword call_LEA(A3000 *a3000) {
+sword call_LEA(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     byte reg = (a3000->opcode >> 9) & 0b111;
@@ -904,23 +904,23 @@ static sword call_LEA(A3000 *a3000) {
     return INS_LEA;
 }
 
-static sword call_CHK(A3000 *a3000) {
+sword call_CHK(A3000 *a3000) {
     return INS_CHK;
 }
 
-static sword call_DBcc(A3000 *a3000) {
+sword call_DBcc(A3000 *a3000) {
     return INS_DBCC;
 }
 
-static sword call_TRAPcc(A3000 *a3000) {
+sword call_TRAPcc(A3000 *a3000) {
     return INS_TRAPCC;
 }
 
-static sword call_Scc(A3000 *a3000) {
+sword call_Scc(A3000 *a3000) {
     return INS_SCC;
 }
 
-static sword call_SUBQ(A3000 *a3000) {
+sword call_SUBQ(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -1043,7 +1043,7 @@ static sword call_SUBQ(A3000 *a3000) {
     return INS_SUBQ;
 }
 
-static sword call_ADDQ(A3000 *a3000) {
+sword call_ADDQ(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -1166,47 +1166,47 @@ static sword call_ADDQ(A3000 *a3000) {
     return INS_ADDQ;
 }
 
-static sword call_BRA(A3000 *a3000) {
+sword call_BRA(A3000 *a3000) {
     return INS_BRA;
 }
 
-static sword call_BSR(A3000 *a3000) {
+sword call_BSR(A3000 *a3000) {
     return INS_BSR;
 }
 
-static sword call_Bcc(A3000 *a3000) {
+sword call_Bcc(A3000 *a3000) {
     return INS_BCC;
 }
 
-static sword call_MOVEQ(A3000 *a3000) {
+sword call_MOVEQ(A3000 *a3000) {
     return INS_MOVEQ;
 }
 
-static sword call_PACK(A3000 *a3000) {
+sword call_PACK(A3000 *a3000) {
     return INS_PACK;
 }
 
-static sword call_UNPK(A3000 *a3000) {
+sword call_UNPK(A3000 *a3000) {
     return INS_UNPK;
 }
 
-static sword call_DIVU(A3000 *a3000) {
+sword call_DIVU(A3000 *a3000) {
     return INS_DIVU;
 }
 
-static sword call_DIVS(A3000 *a3000) {
+sword call_DIVS(A3000 *a3000) {
     return INS_DIVS;
 }
 
-static sword call_SBCD(A3000 *a3000) {
+sword call_SBCD(A3000 *a3000) {
     return INS_SBCD;
 }
 
-static sword call_OR(A3000 *a3000) {
+sword call_OR(A3000 *a3000) {
     return INS_OR;
 }
 
-static sword call_SUBA(A3000 *a3000) {
+sword call_SUBA(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1246,7 +1246,7 @@ static sword call_SUBA(A3000 *a3000) {
     return INS_SUBA;
 }
 
-static sword call_SUBX(A3000 *a3000) {
+sword call_SUBX(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
@@ -1458,7 +1458,7 @@ static sword call_SUBX(A3000 *a3000) {
     return INS_SUBX;
 }
 
-static sword call_SUB(A3000 *a3000) {
+sword call_SUB(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1665,43 +1665,43 @@ static sword call_SUB(A3000 *a3000) {
     return INS_SUB;
 }
 
-static sword call_CMPA(A3000 *a3000) {
+sword call_CMPA(A3000 *a3000) {
     return INS_CMPA;
 }
 
-static sword call_CMPM(A3000 *a3000) {
+sword call_CMPM(A3000 *a3000) {
     return INS_CMPM;
 }
 
-static sword call_EOR(A3000 *a3000) {
+sword call_EOR(A3000 *a3000) {
     return INS_EOR;
 }
 
-static sword call_CMP(A3000 *a3000) {
+sword call_CMP(A3000 *a3000) {
     return INS_CMP;
 }
 
-static sword call_MULU(A3000 *a3000) {
+sword call_MULU(A3000 *a3000) {
     return INS_MULU;
 }
 
-static sword call_MULS(A3000 *a3000) {
+sword call_MULS(A3000 *a3000) {
     return INS_MULS;
 }
 
-static sword call_ABCD(A3000 *a3000) {
+sword call_ABCD(A3000 *a3000) {
     return INS_ABCD;
 }
 
-static sword call_EXG(A3000 *a3000) {
+sword call_EXG(A3000 *a3000) {
     return INS_EXG;
 }
 
-static sword call_AND(A3000 *a3000) {
+sword call_AND(A3000 *a3000) {
     return INS_AND;
 }
 
-static sword call_ADDA(A3000 *a3000) {
+sword call_ADDA(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1741,7 +1741,7 @@ static sword call_ADDA(A3000 *a3000) {
     return INS_ADDA;
 }
 
-static sword call_ADDX(A3000 *a3000) {
+sword call_ADDX(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
@@ -1953,7 +1953,7 @@ static sword call_ADDX(A3000 *a3000) {
     return INS_ADDX;
 }
 
-static sword call_ADD(A3000 *a3000) {
+sword call_ADD(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -2160,11 +2160,11 @@ static sword call_ADD(A3000 *a3000) {
     return INS_ADD;
 }
 
-static sword call_ASd(A3000 *a3000) {
+sword call_ASd(A3000 *a3000) {
     return INS_ASD;
 }
 
-static sword call_LSd(A3000 *a3000) {
+sword call_LSd(A3000 *a3000) {
     a3000->cpu.PC += 2;
 
     CLEAR_V;
@@ -2421,67 +2421,67 @@ static sword call_LSd(A3000 *a3000) {
     return INS_LSD;
 }
 
-static sword call_ROXd(A3000 *a3000) {
+sword call_ROXd(A3000 *a3000) {
     return INS_ROXD;
 }
 
-static sword call_ROd(A3000 *a3000) {
+sword call_ROd(A3000 *a3000) {
     return INS_ROD;
 }
 
-static sword call_BFFFO_BFEXTU(A3000 *a3000) {
+sword call_BFFFO_BFEXTU(A3000 *a3000) {
     return INS_BFFFO_BFEXTU;
 }
 
-static sword call_BFEXTS(A3000 *a3000) {
+sword call_BFEXTS(A3000 *a3000) {
     return INS_BFEXTS;
 }
 
-static sword call_BFINS(A3000 *a3000) {
+sword call_BFINS(A3000 *a3000) {
     return INS_BFINS;
 }
 
-static sword call_BFTST(A3000 *a3000) {
+sword call_BFTST(A3000 *a3000) {
     return INS_BFTST;
 }
 
-static sword call_BFCHG(A3000 *a3000) {
+sword call_BFCHG(A3000 *a3000) {
     return INS_BFCHG;
 }
 
-static sword call_BFCLR(A3000 *a3000) {
+sword call_BFCLR(A3000 *a3000) {
     return INS_BFCLR;
 }
 
-static sword call_BFSET(A3000 *a3000) {
+sword call_BFSET(A3000 *a3000) {
     return INS_BFSET;
 }
 
-static sword call_P(A3000 *a3000) {
+sword call_P(A3000 *a3000) {
     return INS_P;
 }
 
-static sword call_cpGEN(A3000 *a3000) {
+sword call_cpGEN(A3000 *a3000) {
     return INS_CPGEN;
 }
 
-static sword call_cpDBcc(A3000 *a3000) {
+sword call_cpDBcc(A3000 *a3000) {
     return INS_CPDBCC;
 }
 
-static sword call_cpTRAPcc(A3000 *a3000) {
+sword call_cpTRAPcc(A3000 *a3000) {
     return INS_CPTRAPCC;
 }
 
-static sword call_cpScc(A3000 *a3000) {
+sword call_cpScc(A3000 *a3000) {
     return INS_CPSCC;
 }
 
-static sword call_cpSAVE(A3000 *a3000) {
+sword call_cpSAVE(A3000 *a3000) {
     return INS_CPSAVE;
 }
 
-static sword call_cpRESTORE(A3000 *a3000) {
+sword call_cpRESTORE(A3000 *a3000) {
     return INS_CPRESTORE;
 }
 

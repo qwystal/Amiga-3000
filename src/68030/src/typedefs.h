@@ -32,23 +32,77 @@ typedef struct MC68030
     
     lword VBR; // 32-bit Vector Base Register
     
-    lword SFC; // 32-bit Alternate Function Code Register
+    lword SFC; // 32-bit Source Function Code Register though only three bits are used, contains FC0-FC2
     
-    lword DFC; // 32-bit Alternate Function Code Register
+    lword DFC; // 32-bit Destination Function Code Register though only three bits are used, contains FC0-FC2
     
     lword CACR; // 32-bit Cache Control Register
     
     lword CAAR; // 32-bit Cache Address Register
 
-    qword CRP; // 64-bit CPU Root Pointer
+    struct CRP 
+    {
+        byte LU : 1; // Lower/Upper, limit value is unsigned upper(0)/lower(1) limit of indexes
+        word limit : 15; // Limit, lower or upper value limit for the index to be used at the next level of table search
+        word : 14; // always zero
+        byte DT : 2; // Descriptor Table, specifies the type of descriptor in the root pointer or in the 1st level of the translation table 
+        lword table_address : 28; // Table Address, physical base address of the translation table
+        byte unused : 4; // unused and must be ignored when written, apparently different than always zero?
+    } CRP; // 64-bit CPU Root Pointer
 
-    qword SRP; // 64-bit Supervisor Root Pointer
+    struct SRP
+    {
+        byte LU : 1; // Lower/Upper, limit value is unsigned upper(0)/lower(1) limit of indexes
+        word limit : 15; // Limit, lower or upper value limit for the index to be used at the next level of table search
+        word : 14; // always zero
+        byte DT : 2; // Descriptor Table, specifies the type of descriptor in the root pointer or in the 1st level of the translation table 
+        lword table_address : 28; // Table Address, physical base address of the translation table
+        byte unused : 4; // unused and must be ignored when written, apparently different than always zero?
+    } SRP; // 64-bit Supervisor Root Pointer
 
-    lword TC; // 32-bit Translation Control Register
+    struct TC 
+    {
+        byte E : 1; // Enable, address translation switch, cleared on RESET
+        byte : 5; // always zero
+        byte SRE : 1; // Supervisor Root Pointer Enable
+        byte FCL : 1; // Function Code Lookup
+        byte PS : 4; // Page Size
+        byte IS : 4; // Inital Shift
+        byte TIA : 4; // Table Index
+        byte TIB : 4; // Table Index
+        byte TIC : 4; // Table Index
+        byte TID : 4; // Table Index
+    } TC; // 32-bit Translation Control Register
 
-    lword TT0; // 32-bit Transprent Translation Register
+    struct TT0 
+    {
+        byte la_base; // Logical Address Base
+        byte la_mask; // Logical Address Mask
+        byte E : 1; // Enable, transparent translation switch
+        byte : 4; // always zero
+        byte CI : 1; // Cache Inhibit
+        byte RW : 1; // Read/Write
+        byte RWM : 1; // Read/Write Mask
+        byte : 1; // always zero
+        byte fc_base : 3; // Function Code Base
+        byte : 1; // always zero
+        byte fc_mask : 3; // Function Code Mask
+    } TT0; // 32-bit Transprent Translation Register
     
-    lword TT1; // 32-bit Transprent Translation Register
+    struct TT1
+    {
+        byte la_base; // Logical Address Base
+        byte la_mask; // Logical Address Mask
+        byte E : 1; // Enable, transparent translation switch
+        byte : 4; // always zero
+        byte CI : 1; // Cache Inhibit
+        byte RW : 1; // Read/Write
+        byte RWM : 1; // Read/Write Mask
+        byte : 1; // always zero
+        byte fc_base : 3; // Function Code Base
+        byte : 1; // always zero
+        byte fc_mask : 3; // Function Code Mask
+    } TT1; // 32-bit Transprent Translation Register
 
     struct MMUSR 
     {
@@ -63,7 +117,7 @@ typedef struct MC68030
         byte T : 1; // transparent access
         byte : 3;   // always zero
         byte N : 3; // number of levels
-    }; // 16-bit MMU Status Register
+    } MMUSR; // 16-bit MMU Status Register
 
     lword USP; // 32-bit User Stack Pointer
 
@@ -125,12 +179,33 @@ typedef struct addressing_modes_arguments
     byte format : 1; // extension word format, 0 for brief, 1 for full
 } AMA;
 
-typedef enum error_type {
+typedef enum {
     MEMORY_ACCESS_VIOLATION,
     UNSUPPORTED_SEF,
     ASSERT_FAILURE
 } error_type;
 
+typedef enum {
+    U_BYTE,
+    U_WORD,
+    U_LWORD,
+    U_QWORD,
+    S_BYTE,
+    S_WORD,
+    S_LWORD,
+    S_QWORD
+} data_type;
+
+typedef struct {
+    enum type{
+        BYTE,
+        WORD,
+        LWORD,
+        QWORD
+    } type;
+
+    void *data;
+} data;
 
 /* NOT REQUIRED
 // Four-Word Stack Frame

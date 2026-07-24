@@ -6,10 +6,10 @@
 #include "typedefs.h"
 #include "debug.h"
 
-byte *d_reg_min = NULL;
-byte *a_reg_min = NULL;
-byte *mem_min = NULL;
-size_t mem_size = 0;
+byte *d_reg_min = NULL; // lower bounds of the data registers in memory
+byte *a_reg_min = NULL; // lower bounds of the address registers in memory
+byte *mem_min = NULL;   // lower bounds of the memory in memory
+size_t mem_size = 0;    // memory size
 
 // Read byte from memory
 byte rb_mem(A3000 *a3000, lword address) 
@@ -120,4 +120,18 @@ void wl_ptr(byte *address, lword data)
 lword get_virt_addr(byte *address)
 {
     return (lword) (address - mem_min);
+}
+
+void *mmu(A3000 *a3000, lword logical_addr) { // return physical address
+    void *physical_addr = (void *) 0;
+
+    if (a3000->cpu.TC.FCL == 0b111)
+    {
+        physical_addr = &a3000->memory;
+        return physical_addr;
+    }
+    
+
+
+    return physical_addr;
 }

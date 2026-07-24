@@ -19,6 +19,7 @@
 #define CLEAR_Z a3000->cpu.SR.CCR.Z = 0
 #define CLEAR_N a3000->cpu.SR.CCR.N = 0
 #define CLEAR_X a3000->cpu.SR.CCR.X = 0
+
 // cpu pins
 // function code signals
 #define FC0 0
@@ -105,13 +106,13 @@
 // External Cycle Start
 #define ECS 70
 // Read/Write
-#define RW 71
+#define _RW 71
 // Read-Modify-Write Cycle
 #define RMC 72
 // Address Strobe
-#define AS 73
+#define _AS 73
 // Data Strobe
-#define DS 74
+#define _DS 74
 // Data Buffer Enable
 #define DBEN 75
 // Data Transfer and Size Acknowledge

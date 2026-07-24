@@ -2,11 +2,38 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "../src/typedefs.h"
+#include "../src/memory.h"
 #include "../src/instruction_set.h"
-#include "unit_test.h"
+#include "../src/debug.h"
+
+#define COLOR_RED "\x1b[31m"
+#define COLOR_GREEN "\x1b[32m"
+#define COLOR_RESET "\x1b[0m"
+
+#define ASSERT(x, msg) \
+if (x) {\
+    success(msg);\
+    tests++;\
+}\
+else {\
+    error(ASSERT_FAILURE);\
+    tests++;\
+    errors++;\
+}\
 
 size_t errors = 0;
 size_t tests = 0;
+
+extern size_t internal_error;
+extern byte suppress_errors;
+extern size_t error_types[256];
+extern const char *error_msgs[3];
+
+extern byte *d_reg_min;
+extern byte *a_reg_min;
+extern byte *mem_min;
+extern size_t mem_size;
 
 void test_instructions(A3000 *a3000) {
     size_t counter = 0;

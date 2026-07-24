@@ -76,22 +76,22 @@ static slword get_PC(A3000 *a3000, AMA ama) {
 
     they are only returning addresses to the required data!
 */
-static byte *data_register_direct_mode(A3000 *a3000, AMA ama)
+byte *data_register_direct_mode(A3000 *a3000, AMA ama)
 {
     return (byte *) &(a3000->cpu.GPR.D[ama.reg]);
 }
 
-static byte *address_register_direct_mode(A3000 *a3000, AMA ama)
+byte *address_register_direct_mode(A3000 *a3000, AMA ama)
 {
     return (byte *) &(a3000->cpu.GPR.A[ama.reg]);
 }
 
-static byte *address_register_indirect_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_mode(A3000 *a3000, AMA ama)
 {
     return &(a3000->memory[a3000->cpu.GPR.A[ama.reg]]);
 }
 
-static byte *address_register_indirect_with_postincrement_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_with_postincrement_mode(A3000 *a3000, AMA ama)
 {
     if (ama.reg == 7 && ama.size == 1) // only if address register is stack pointer
     {
@@ -103,7 +103,7 @@ static byte *address_register_indirect_with_postincrement_mode(A3000 *a3000, AMA
     }
 }
 
-static byte *address_register_indirect_with_predecrement_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_with_predecrement_mode(A3000 *a3000, AMA ama)
 {
     if (ama.reg == 7 && ama.size == 1) // only if address register is stack pointer
     {
@@ -115,58 +115,58 @@ static byte *address_register_indirect_with_predecrement_mode(A3000 *a3000, AMA 
     }
 }
 
-static byte *address_register_indirect_with_displacement_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_with_displacement_mode(A3000 *a3000, AMA ama)
 {
     return &(a3000->memory[ama.d16 + a3000->cpu.GPR.A[ama.reg]]); // signed + unsigned number
 }
 
-static byte *address_register_indirect_with_index_8bit_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_with_index_8bit_mode(A3000 *a3000, AMA ama)
 {
     return &(a3000->memory[ama.d8 + a3000->cpu.GPR.A[ama.reg] + get_index(a3000, ama)]); // signed + unsigned number
 }
 
-static byte *address_register_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama)
+byte *address_register_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama)
 {
     return &(a3000->memory[get_bd(ama) + a3000->cpu.GPR.A[ama.reg] + (get_index(a3000, ama))]); // signed + unsigned number
 }
 
-static byte *memory_indirect_postindexed_mode(A3000 *a3000, AMA ama) {
+byte *memory_indirect_postindexed_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[rl_mem(a3000, a3000->cpu.GPR.A[ama.reg] + get_bd(ama)) + get_index(a3000, ama) + ama.od]);
 }
 
-static byte *memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
+byte *memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[rl_mem(a3000, a3000->cpu.GPR.A[ama.reg] + get_bd(ama) + get_index(a3000, ama)) + ama.od]);
 }
 
-static byte *program_counter_indirect_with_displacement_mode(A3000 *a3000, AMA ama) {
+byte *program_counter_indirect_with_displacement_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[get_PC(a3000, ama) + ama.d16]); // only allowed for reads?
 }
 
-static byte *program_counter_indirect_with_index_8bit_displacement_mode(A3000 *a3000, AMA ama) {
+byte *program_counter_indirect_with_index_8bit_displacement_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[ama.d8 + get_PC(a3000, ama) + get_index(a3000, ama)]); // signed + unsigned number
 }
 
-static byte *program_counter_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama) {
+byte *program_counter_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[get_PC(a3000, ama) + ama.bd + get_index(a3000, ama)]);
 }
 
-static byte *program_counter_memory_indirect_postindexed_mode(A3000 *a3000, AMA ama) {
+byte *program_counter_memory_indirect_postindexed_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[rl_mem(a3000, get_PC(a3000, ama) + ama.bd) + get_index(a3000, ama) + ama.od]);
 }
 
-static byte *program_counter_memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
+byte *program_counter_memory_indirect_preindexed_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[rl_mem(a3000, get_PC(a3000, ama) + ama.bd + get_index(a3000, ama)) + ama.od]);
 }
 
-static byte *absolute_short_addressing_mode(A3000 *a3000, AMA ama) {
+byte *absolute_short_addressing_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[(lword) ((slword) rw_mem(a3000, ama.ew1))]);
 }
 
-static byte *absolute_long_addressing_mode(A3000 *a3000, AMA ama) {
+byte *absolute_long_addressing_mode(A3000 *a3000, AMA ama) {
     return &(a3000->memory[(((lword) rw_mem(a3000, ama.ew1)) << 16) + rw_mem(a3000, ama.ew2)]);
 }
 
-static byte *immediate_data_mode(A3000 *a3000, AMA ama) {
+byte *immediate_data_mode(A3000 *a3000, AMA ama) {
     /*
     switch (ama.size)
     {
@@ -191,7 +191,7 @@ static byte *immediate_data_mode(A3000 *a3000, AMA ama) {
     every possible argument, even though some aren't
     needed for every addressing mode.
 */
-static AMA get_AMA(A3000 *a3000) {
+AMA get_AMA(A3000 *a3000) {
     word reg = a3000->opcode & 0b111;
     word fw = rw_mem(a3000, a3000->cpu.PC); // format word 
     a3000->cpu.PC += 2;

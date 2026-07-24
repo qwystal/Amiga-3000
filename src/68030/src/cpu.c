@@ -1,4 +1,5 @@
 #include "typedefs.h"
+#include <strings.h>
 
 lword exception_vector_lookup(byte *mem, byte vector_number)
 {

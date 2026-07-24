@@ -5,9 +5,6 @@
 
 #include "memory.h"
 #include "debug.h"
-#include "addressing_modes.h"
-
-static word get_SR(A3000 *a3000);
 
 void write_sef(A3000 *a3000, word format, word vector) { // write stack exception frame
     
@@ -21,7 +18,7 @@ void write_sef(A3000 *a3000, word format, word vector) { // write stack exceptio
             wl_mem(a3000, a3000->cpu.SSP, a3000->cpu.PC);
             a3000->cpu.SSP -= 2;
             ww_mem(a3000, a3000->cpu.SSP, get_SR(a3000));
-            a3000->cpu.PC = vector * 4;
+            a3000->cpu.PC = a3000->cpu.VBR + (vector * 4);
             break;
         
         case 1:

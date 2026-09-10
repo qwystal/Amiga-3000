@@ -4,6 +4,7 @@
 #include "typedefs.h"
 
 lword exception_vector_lookup(byte *mem, byte vector_number);
-void initialize_cpu(CPU *cpu, byte *mem);
+a3000_t *init_cpu();
+void free_cpu(a3000_t *a3000);
 
 #endif

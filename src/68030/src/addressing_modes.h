@@ -2,28 +2,28 @@
 #define ADDRESSING_MODES_H
 
 
-byte *data_register_direct_mode(A3000 *a3000, AMA ama);
-byte *address_register_direct_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_with_postincrement_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_with_predecrement_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_with_displacement_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_with_index_8bit_mode(A3000 *a3000, AMA ama);
-byte *address_register_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama);
-byte *memory_indirect_postindexed_mode(A3000 *a3000, AMA ama);
-byte *memory_indirect_preindexed_mode(A3000 *a3000, AMA ama);
-byte *program_counter_indirect_with_displacement_mode(A3000 *a3000, AMA ama);
-byte *program_counter_indirect_with_index_8bit_displacement_mode(A3000 *a3000, AMA ama);
-byte *program_counter_indirect_with_index_base_displacement_mode(A3000 *a3000, AMA ama);
-byte *program_counter_memory_indirect_postindexed_mode(A3000 *a3000, AMA ama);
-byte *program_counter_memory_indirect_preindexed_mode(A3000 *a3000, AMA ama);
-byte *absolute_short_addressing_mode(A3000 *a3000, AMA ama);
-byte *absolute_long_addressing_mode(A3000 *a3000, AMA ama);
-byte *immediate_data_mode(A3000 *a3000, AMA ama);
+byte *data_register_direct_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_direct_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_with_postincrement_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_with_predecrement_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_with_displacement_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_with_index_8bit_mode(a3000_t *a3000, ama_t ama);
+byte *address_register_indirect_with_index_base_displacement_mode(a3000_t *a3000, ama_t ama);
+byte *memory_indirect_postindexed_mode(a3000_t *a3000, ama_t ama);
+byte *memory_indirect_preindexed_mode(a3000_t *a3000, ama_t ama);
+byte *program_counter_indirect_with_displacement_mode(a3000_t *a3000, ama_t ama);
+byte *program_counter_indirect_with_index_8bit_displacement_mode(a3000_t *a3000, ama_t ama);
+byte *program_counter_indirect_with_index_base_displacement_mode(a3000_t *a3000, ama_t ama);
+byte *program_counter_memory_indirect_postindexed_mode(a3000_t *a3000, ama_t ama);
+byte *program_counter_memory_indirect_preindexed_mode(a3000_t *a3000, ama_t ama);
+byte *absolute_short_addressing_mode(a3000_t *a3000, ama_t ama);
+byte *absolute_long_addressing_mode(a3000_t *a3000, ama_t ama);
+byte *immediate_data_mode(a3000_t *a3000, ama_t ama);
 
 
-AMA get_AMA(A3000 *a3000);
+ama_t get_AMA(a3000_t *a3000);
 
-byte *get_ea(A3000 *a3000, byte category);
+byte *get_ea(a3000_t *a3000, byte category);
 
 #endif

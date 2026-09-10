@@ -12,13 +12,13 @@ byte *mem_min = NULL;   // lower bounds of the memory in memory
 size_t mem_size = 0;    // memory size
 
 // Read byte from memory
-byte rb_mem(A3000 *a3000, lword address) 
+byte rb_mem(a3000_t *a3000, lword address)
 {
     return a3000->memory[address];
 }
 
 // Read word from memory
-word rw_mem(A3000 *a3000, lword address) 
+word rw_mem(a3000_t *a3000, lword address)
 {
     word data = 0;
     data |= rb_mem(a3000, address + 1); // Gets the low byte
@@ -27,7 +27,7 @@ word rw_mem(A3000 *a3000, lword address)
 }
 
 // Read long word from memory
-lword rl_mem(A3000 *a3000, lword address) 
+lword rl_mem(a3000_t *a3000, lword address)
 {
     lword data = 0;
     data |= rb_mem(a3000, address + 4); // Gets the low byte
@@ -38,20 +38,20 @@ lword rl_mem(A3000 *a3000, lword address)
 }
 
 // Write byte to memory
-void wb_mem(A3000 *a3000, lword address, byte data)
+void wb_mem(a3000_t *a3000, lword address, byte data)
 {
     a3000->memory[address] = data;
 }
 
 // Write word to memory
-void ww_mem(A3000 *a3000, lword address, word data)
+void ww_mem(a3000_t *a3000, lword address, word data)
 {
     wb_mem(a3000, address, data & 0xFF); // writes the low byte using a bitwise AND to mask the high byte
     wb_mem(a3000, address + 1, data >> 8); // writes the high byte and shifts it to the right
 }
 
 // Write long word to memory
-void wl_mem(A3000 *a3000, lword address, lword data)
+void wl_mem(a3000_t *a3000, lword address, lword data)
 {
     wb_mem(a3000, address, data & 0xFF); // writes the low byte using a bitwise AND to mask the high byte
     wb_mem(a3000, address + 1, (data >> 8) & 0xFF); // writes the high byte and shifts it to the right
@@ -66,13 +66,13 @@ byte rb_ptr(byte *address)
     if ((address >= d_reg_min && address < (d_reg_min + 32)) || (address >= a_reg_min && address < (a_reg_min + 32)) || (address >= mem_min && address < (mem_min + mem_size)))
         return (byte) *address;
     else
-        error(MEMORY_ACCESS_VIOLATION);
+        error("out of bounds memory access");
     
     return 0;
 }
 
 // Read word behind a pointer, could be register or memory
-word rw_ptr(byte *address) 
+word rw_ptr(byte *address)
 {
     word data = 0;
     data |= rb_ptr(address + 1); // Gets the low byte
@@ -81,7 +81,7 @@ word rw_ptr(byte *address)
 }
 
 // Read long word behind a pointer, could be register or memory
-lword rl_ptr(byte *address) 
+lword rl_ptr(byte *address)
 {
     lword data = 0;
     data |= rb_ptr(address + 4); // Gets the low byte
@@ -98,7 +98,7 @@ void wb_ptr(byte *address, byte data)
     if ((address >= d_reg_min && address < (d_reg_min + 32)) || (address >= a_reg_min && address < (a_reg_min + 32)) || (address >= mem_min && address < (mem_min + mem_size)))
         *address = data;
     else
-        error(MEMORY_ACCESS_VIOLATION);
+        error("out of bounds memory access");
 }
 
 // Write word to the pointed space, could be register or memory
@@ -122,16 +122,26 @@ lword get_virt_addr(byte *address)
     return (lword) (address - mem_min);
 }
 
-void *mmu(A3000 *a3000, lword logical_addr) { // return physical address
-    void *physical_addr = (void *) 0;
+// parallel tag
+byte *mmu(a3000_t *a3000, lword logical_addr) { // return physical address
+    byte *physical_addr = mem_min + logical_addr;
+
+    // if logical address is a register, return the same address
+    if ((physical_addr >= d_reg_min && physical_addr <=d_reg_min + sizeof(lword)) || 
+        (physical_addr >= a_reg_min && physical_addr <=a_reg_min + sizeof(lword)) )
+    {
+        return physical_addr;
+    }
+
+
+    
 
     if (a3000->cpu.TC.FCL == 0b111)
     {
-        physical_addr = &a3000->memory;
+        physical_addr = a3000->memory;
         return physical_addr;
     }
     
-
 
     return physical_addr;
 }

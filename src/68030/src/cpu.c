@@ -1,14 +1,34 @@
 #include "typedefs.h"
+#include "memory.h"
+#include "debug.h"
 #include <strings.h>
+#include <stdlib.h>
 
-lword exception_vector_lookup(byte *mem, byte vector_number)
+a3000_t *init_cpu()
 {
-    return (mem[vector_number * 4] << 24) | (mem[vector_number * 4 + 1] << 16) | (mem[vector_number * 4 + 2] << 8) | mem[vector_number * 4 + 3];
+    a3000_t *a3000 = malloc(sizeof(a3000_t));
+    if (a3000 == nullptr)
+    {
+        error("failed memory allocation");
+    }
+
+    a3000->memory = malloc(MAX_MEM_SIZE);
+    if (a3000->memory == nullptr)
+    {
+        error("failed memory allocation");
+    }
+    
+
+    mem_min = a3000->memory;
+    d_reg_min = (byte *) &a3000->cpu.GPR.D[0];
+    a_reg_min = (byte *) &a3000->cpu.GPR.A[0];
+    mem_size = MAX_MEM_SIZE;
+
+    return a3000;
 }
 
-void initialize_cpu(CPU *cpu, byte *mem)
+void free_cpu(a3000_t *a3000)
 {
-    memset(cpu, 0, sizeof(CPU));
-    cpu->SSP = exception_vector_lookup(mem, 0);
-    cpu->PC = exception_vector_lookup(mem, 1);
+    free(a3000->memory);
+    free(a3000);
 }

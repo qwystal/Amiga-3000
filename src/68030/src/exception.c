@@ -6,8 +6,7 @@
 #include "memory.h"
 #include "debug.h"
 
-void write_sef(A3000 *a3000, word format, word vector) { // write stack exception frame
-    
+void write_sef(a3000_t *a3000, word format, word vector) { // write stack exception frame
     
     switch (format)
     {
@@ -30,7 +29,7 @@ void write_sef(A3000 *a3000, word format, word vector) { // write stack exceptio
     }
 }
 
-void exception(A3000 *a3000, word vector) {
+void exception(a3000_t *a3000, word vector) {
     switch (vector)
     {
         case VEC_ILLEGAL_INSTRUCTION:

@@ -3,15 +3,20 @@
 
 #include "typedefs.h"
 
+extern byte *d_reg_min; // lower bounds of the data registers in memory
+extern byte *a_reg_min; // lower bounds of the address registers in memory
+extern byte *mem_min;   // lower bounds of the memory in memory
+extern size_t mem_size;    // memory size
+
 // read from the provided memory address
-byte rb_mem(A3000 *a3000, lword address);
-word rw_mem(A3000 *a3000, lword address);
-lword rl_mem(A3000 *a3000, lword address);
+byte rb_mem(a3000_t *a3000, lword address);
+word rw_mem(a3000_t *a3000, lword address);
+lword rl_mem(a3000_t *a3000, lword address);
 
 // write to the provided memory address
-void wb_mem(A3000 *a3000, lword address, byte data);
-void ww_mem(A3000 *a3000, lword address, word data);
-void wl_mem(A3000 *a3000, lword address, lword data);
+void wb_mem(a3000_t *a3000, lword address, byte data);
+void ww_mem(a3000_t *a3000, lword address, word data);
+void wl_mem(a3000_t *a3000, lword address, lword data);
 
 // read directly from the data behind the provided pointer
 byte rb_ptr(byte *address);
@@ -27,6 +32,6 @@ void wl_ptr(byte *address, lword data);
 lword get_virt_addr(byte *address);
 
 // memory management unit
-void *mmu(A3000 *a3000, lword logical_addr);
+byte *mmu(a3000_t *a3000, lword logical_addr);
 
 #endif

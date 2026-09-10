@@ -20,6 +20,8 @@
 #define CLEAR_N a3000->cpu.SR.CCR.N = 0
 #define CLEAR_X a3000->cpu.SR.CCR.X = 0
 
+#define BITS(start, count, var) (var >> start) & ((1 << count) - 1) // get bit start to start + count of var, count can't be zero
+
 // cpu pins
 // function code signals
 #define FC0 0

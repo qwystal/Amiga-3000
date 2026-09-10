@@ -145,18 +145,19 @@ typedef struct MC68030
     
     // reset vectors??
 
-} CPU;
+} cpu_t;
 
 
 typedef struct Amiga_3000
 {
-    CPU cpu;
-    byte *memory;
+    cpu_t cpu;
     word opcode;
     word rom_opcode;
     byte debugLevel;
     word cycles;
-} A3000;
+    lword memory_size;
+    byte *memory;
+} a3000_t;
 
 typedef struct addressing_modes_arguments
 {
@@ -177,7 +178,7 @@ typedef struct addressing_modes_arguments
     byte is : 1; // index register suppress, 1 = suppressed
     byte IIS : 3; // Index/Indirect for Memory Indirection encodings
     byte format : 1; // extension word format, 0 for brief, 1 for full
-} AMA;
+} ama_t;
 
 typedef enum {
     MEMORY_ACCESS_VIOLATION,

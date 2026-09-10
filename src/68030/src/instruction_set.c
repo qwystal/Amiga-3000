@@ -19,7 +19,7 @@
 */
 
 /* get the value of the Status Register */
-word get_SR(A3000 *a3000) 
+word get_SR(a3000_t *a3000) 
 {
     word SR = 0;
     SR |= a3000->cpu.SR.CCR.C;
@@ -38,7 +38,7 @@ word get_SR(A3000 *a3000)
 }
 
 /* set the value of the Status Register */
-void set_SR(A3000 *a3000, word SR) 
+void set_SR(a3000_t *a3000, word SR) 
 {
     a3000->cpu.SR.CCR.C = (SR & 0x01);
     a3000->cpu.SR.CCR.V = !!(SR & 0x02);
@@ -55,7 +55,7 @@ void set_SR(A3000 *a3000, word SR)
 }
 
 /* get the value of the Condition Code Register (the operation flags reside there) */
-word get_CCR(A3000 *a3000) { 
+word get_CCR(a3000_t *a3000) { 
     word CCR = 0;
     CCR |= a3000->cpu.SR.CCR.C;
     CCR |= (a3000->cpu.SR.CCR.V << 1);
@@ -66,7 +66,7 @@ word get_CCR(A3000 *a3000) {
 }
 
 /* set the value of the Condition Code Register (the operation flags reside there) */
-void set_CCR(A3000 *a3000, word CCR) { 
+void set_CCR(a3000_t *a3000, word CCR) { 
     a3000->cpu.SR.CCR.C = (CCR & 0x01);
     a3000->cpu.SR.CCR.V = !!(CCR & 0x02);
     a3000->cpu.SR.CCR.Z = !!(CCR & 0x04);
@@ -80,11 +80,11 @@ void signal(word signal) {
 
 }
 
-sword call_TRAP(A3000 *a3000) {
+sword call_TRAP(a3000_t *a3000) {
     return INS_TRAP;
 }
 
-sword call_ORI_to_CCR(A3000 *a3000) {
+sword call_ORI_to_CCR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -105,7 +105,7 @@ sword call_ORI_to_CCR(A3000 *a3000) {
     return INS_ORI_TO_CCR;
 }
 
-sword call_ORI_to_SR(A3000 *a3000) {
+sword call_ORI_to_SR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -133,7 +133,7 @@ sword call_ORI_to_SR(A3000 *a3000) {
     return INS_ORI_TO_SR;
 }
 
-sword call_ANDI_to_CCR(A3000 *a3000) {
+sword call_ANDI_to_CCR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -154,7 +154,7 @@ sword call_ANDI_to_CCR(A3000 *a3000) {
     return INS_ANDI_TO_CCR;
 }
 
-sword call_ANDI_to_SR(A3000 *a3000) {
+sword call_ANDI_to_SR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -182,7 +182,7 @@ sword call_ANDI_to_SR(A3000 *a3000) {
     return INS_ANDI_TO_SR;
 }
 
-sword call_EORI_to_CCR(A3000 *a3000) {
+sword call_EORI_to_CCR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -203,7 +203,7 @@ sword call_EORI_to_CCR(A3000 *a3000) {
     return INS_EORI_TO_CCR;
 }
 
-sword call_EORI_to_SR(A3000 *a3000) {
+sword call_EORI_to_SR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -231,13 +231,13 @@ sword call_EORI_to_SR(A3000 *a3000) {
     return INS_EORI_TO_SR;
 }
 
-sword call_ILLEGAL(A3000 *a3000) {
+sword call_ILLEGAL(a3000_t *a3000) {
     exception(a3000, VEC_ILLEGAL_INSTRUCTION);
 
     return INS_ILLEGAL;
 }
 
-sword call_RESET(A3000 *a3000) {
+sword call_RESET(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -251,7 +251,7 @@ sword call_RESET(A3000 *a3000) {
     return INS_RESET;
 }
 
-sword call_NOP(A3000 *a3000) {
+sword call_NOP(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     // "NOP instruction does not begin execution, until all pending bus cycles have completed to synchronize the pipeline"
@@ -259,7 +259,7 @@ sword call_NOP(A3000 *a3000) {
     return INS_NOP;
 }
 
-sword call_STOP(A3000 *a3000) {
+sword call_STOP(a3000_t *a3000) {
     a3000->cpu.PC += 2;
     if (!a3000->cpu.SR.S)
     {
@@ -273,7 +273,7 @@ sword call_STOP(A3000 *a3000) {
     return INS_STOP;
 }
 
-sword call_RTE(A3000 *a3000) {
+sword call_RTE(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (!a3000->cpu.SR.S)
@@ -317,14 +317,14 @@ sword call_RTE(A3000 *a3000) {
             break;
         
         default:
-            error(UNSUPPORTED_SEF);
+            error("unsupported sef");
             break;
     }
 
     return INS_RTE;
 }
 
-sword call_RTD(A3000 *a3000) {
+sword call_RTD(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     slword displacement = (slword) rw_mem(a3000, a3000->cpu.PC);
@@ -336,7 +336,7 @@ sword call_RTD(A3000 *a3000) {
     return INS_RTD;
 }
 
-sword call_RTS(A3000 *a3000) {
+sword call_RTS(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
@@ -345,7 +345,7 @@ sword call_RTS(A3000 *a3000) {
     return INS_RTS;
 }
 
-sword call_TRAPV(A3000 *a3000) {
+sword call_TRAPV(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     if (a3000->cpu.SR.CCR.V)
@@ -357,7 +357,7 @@ sword call_TRAPV(A3000 *a3000) {
     return INS_TRAPV;
 }
 
-sword call_RTR(A3000 *a3000) {
+sword call_RTR(a3000_t *a3000) {
     set_CCR(a3000, rw_mem(a3000, a3000->cpu.GPR.A[7]));
     a3000->cpu.GPR.A[7] += 2;
     a3000->cpu.PC = rl_mem(a3000, a3000->cpu.GPR.A[7]);
@@ -366,28 +366,28 @@ sword call_RTR(A3000 *a3000) {
     return INS_RTR;
 }
 
-sword call_ORI(A3000 *a3000) {
+sword call_ORI(a3000_t *a3000) {
 
     return INS_ORI;
 }
 
-sword call_CAS2(A3000 *a3000) {
+sword call_CAS2(a3000_t *a3000) {
     return INS_CAS2;
 }
 
-sword call_CAS(A3000 *a3000) {
+sword call_CAS(a3000_t *a3000) {
     return INS_CAS;
 }
 
-sword call_CHK2_CMP2(A3000 *a3000) {
+sword call_CHK2_CMP2(a3000_t *a3000) {
     return INS_CHK2_CMP2;
 }
 
-sword call_ANDI(A3000 *a3000) {
+sword call_ANDI(a3000_t *a3000) {
     return INS_ANDI;
 }
 
-sword call_SUBI(A3000 *a3000) {
+sword call_SUBI(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -499,7 +499,7 @@ sword call_SUBI(A3000 *a3000) {
     return INS_SUBI;
 }
 
-sword call_ADDI(A3000 *a3000) {
+sword call_ADDI(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -611,43 +611,43 @@ sword call_ADDI(A3000 *a3000) {
     return INS_ADDI;
 }
 
-sword call_EORI(A3000 *a3000) {
+sword call_EORI(a3000_t *a3000) {
     return INS_EORI;
 }
 
-sword call_CMPI(A3000 *a3000) {
+sword call_CMPI(a3000_t *a3000) {
     return INS_CMPI;
 }
 
-sword call_BTST(A3000 *a3000) {
+sword call_BTST(a3000_t *a3000) {
     return INS_BTST;
 }
 
-sword call_BCHG(A3000 *a3000) {
+sword call_BCHG(a3000_t *a3000) {
     return INS_BCHG;
 }
 
-sword call_BCLR(A3000 *a3000) {
+sword call_BCLR(a3000_t *a3000) {
     return INS_BCLR;
 }
 
-sword call_BSET(A3000 *a3000) {
+sword call_BSET(a3000_t *a3000) {
     return INS_BSET;
 }
 
-sword call_MOVES(A3000 *a3000) {
+sword call_MOVES(a3000_t *a3000) {
     return INS_MOVES;
 }
 
-sword call_MOVEP(A3000 *a3000) {
+sword call_MOVEP(a3000_t *a3000) {
     return INS_MOVEP;
 }
 
-sword call_MOVEA(A3000 *a3000) {
+sword call_MOVEA(a3000_t *a3000) {
     return INS_MOVEA;
 }
 
-sword call_MOVE(A3000 *a3000) {
+sword call_MOVE(a3000_t *a3000) {
     a3000->cpu.PC += 2; 
 
     CLEAR_C;
@@ -725,39 +725,39 @@ sword call_MOVE(A3000 *a3000) {
     return INS_MOVE;
 }
 
-sword call_MOVE_from_SR(A3000 *a3000) {
+sword call_MOVE_from_SR(a3000_t *a3000) {
     return INS_MOVE_FROM_SR;
 }
 
-sword call_NEGX(A3000 *a3000) {
+sword call_NEGX(a3000_t *a3000) {
     return INS_NEGX;
 }
 
-sword call_MOVE_from_CCR(A3000 *a3000) {
+sword call_MOVE_from_CCR(a3000_t *a3000) {
     return INS_MOVE_FROM_CCR;
 }
 
-sword call_CLR(A3000 *a3000) {
+sword call_CLR(a3000_t *a3000) {
     return INS_CLR;
 }
 
-sword call_MOVE_to_CCR(A3000 *a3000) {
+sword call_MOVE_to_CCR(a3000_t *a3000) {
     return INS_MOVE_TO_CCR;
 }
 
-sword call_NEG(A3000 *a3000) {
+sword call_NEG(a3000_t *a3000) {
     return INS_NEG;
 }
 
-sword call_MOVE_to_SR(A3000 *a3000) {
+sword call_MOVE_to_SR(a3000_t *a3000) {
     return INS_MOVE_TO_SR;
 }
 
-sword call_NOT(A3000 *a3000) {
+sword call_NOT(a3000_t *a3000) {
     return INS_NOT;
 }
 
-sword call_EXT(A3000 *a3000) {
+sword call_EXT(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     CLEAR_C;
@@ -811,35 +811,35 @@ sword call_EXT(A3000 *a3000) {
     return INS_EXT;
 }
 
-sword call_NBCD(A3000 *a3000) {
+sword call_NBCD(a3000_t *a3000) {
     return INS_NBCD;
 }
 
-sword call_SWAP(A3000 *a3000) {
+sword call_SWAP(a3000_t *a3000) {
     return INS_SWAP;
 }
 
-sword call_BKPT(A3000 *a3000) {
+sword call_BKPT(a3000_t *a3000) {
     return INS_BKPT;
 }
 
-sword call_PEA(A3000 *a3000) {
+sword call_PEA(a3000_t *a3000) {
     return INS_PEA;
 }
 
-sword call_TAS(A3000 *a3000) {
+sword call_TAS(a3000_t *a3000) {
     return INS_TAS;
 }
 
-sword call_TST(A3000 *a3000) {
+sword call_TST(a3000_t *a3000) {
     return INS_TST;
 }
 
-sword call_DIVSL_DIVUL(A3000 *a3000) {
+sword call_DIVSL_DIVUL(a3000_t *a3000) {
     return INS_DIVSL_DIVUL;
 }
 
-sword call_LINK(A3000 *a3000) {
+sword call_LINK(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     byte reg = a3000->opcode & 0b111;
@@ -862,26 +862,26 @@ sword call_LINK(A3000 *a3000) {
     return INS_LINK;
 }
 
-sword call_UNLK(A3000 *a3000) {
+sword call_UNLK(a3000_t *a3000) {
     return INS_UNLK;
 }
 
-sword call_MOVE_USP(A3000 *a3000) {
+sword call_MOVE_USP(a3000_t *a3000) {
     return INS_MOVE_USP;
 }
 
-sword call_MOVEC(A3000 *a3000) {
+sword call_MOVEC(a3000_t *a3000) {
     return INS_MOVEC;
 }
 
-sword call_JMP(A3000 *a3000) {
+sword call_JMP(a3000_t *a3000) {
     a3000->cpu.PC += 2;
     a3000->cpu.PC = get_virt_addr(get_ea(a3000, AMC_CONTROL)); // get difference between pointer
 
     return INS_JMP;
 }
 
-sword call_JSR(A3000 *a3000) {
+sword call_JSR(a3000_t *a3000) {
     a3000->cpu.PC += 2;
     a3000->cpu.GPR.A[7] -= 4;
     wl_mem(a3000, a3000->cpu.GPR.A[7], a3000->cpu.PC);
@@ -890,11 +890,11 @@ sword call_JSR(A3000 *a3000) {
     return INS_JSR;
 }
 
-sword call_MOVEM(A3000 *a3000) {
+sword call_MOVEM(a3000_t *a3000) {
     return INS_MOVEM;
 }
 
-sword call_LEA(A3000 *a3000) {
+sword call_LEA(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     byte reg = (a3000->opcode >> 9) & 0b111;
@@ -904,23 +904,23 @@ sword call_LEA(A3000 *a3000) {
     return INS_LEA;
 }
 
-sword call_CHK(A3000 *a3000) {
+sword call_CHK(a3000_t *a3000) {
     return INS_CHK;
 }
 
-sword call_DBcc(A3000 *a3000) {
+sword call_DBcc(a3000_t *a3000) {
     return INS_DBCC;
 }
 
-sword call_TRAPcc(A3000 *a3000) {
+sword call_TRAPcc(a3000_t *a3000) {
     return INS_TRAPCC;
 }
 
-sword call_Scc(A3000 *a3000) {
+sword call_Scc(a3000_t *a3000) {
     return INS_SCC;
 }
 
-sword call_SUBQ(A3000 *a3000) {
+sword call_SUBQ(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -1043,7 +1043,7 @@ sword call_SUBQ(A3000 *a3000) {
     return INS_SUBQ;
 }
 
-sword call_ADDQ(A3000 *a3000) {
+sword call_ADDQ(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word size = (a3000->opcode >> 6) & 0b11;
@@ -1166,47 +1166,47 @@ sword call_ADDQ(A3000 *a3000) {
     return INS_ADDQ;
 }
 
-sword call_BRA(A3000 *a3000) {
+sword call_BRA(a3000_t *a3000) {
     return INS_BRA;
 }
 
-sword call_BSR(A3000 *a3000) {
+sword call_BSR(a3000_t *a3000) {
     return INS_BSR;
 }
 
-sword call_Bcc(A3000 *a3000) {
+sword call_Bcc(a3000_t *a3000) {
     return INS_BCC;
 }
 
-sword call_MOVEQ(A3000 *a3000) {
+sword call_MOVEQ(a3000_t *a3000) {
     return INS_MOVEQ;
 }
 
-sword call_PACK(A3000 *a3000) {
+sword call_PACK(a3000_t *a3000) {
     return INS_PACK;
 }
 
-sword call_UNPK(A3000 *a3000) {
+sword call_UNPK(a3000_t *a3000) {
     return INS_UNPK;
 }
 
-sword call_DIVU(A3000 *a3000) {
+sword call_DIVU(a3000_t *a3000) {
     return INS_DIVU;
 }
 
-sword call_DIVS(A3000 *a3000) {
+sword call_DIVS(a3000_t *a3000) {
     return INS_DIVS;
 }
 
-sword call_SBCD(A3000 *a3000) {
+sword call_SBCD(a3000_t *a3000) {
     return INS_SBCD;
 }
 
-sword call_OR(A3000 *a3000) {
+sword call_OR(a3000_t *a3000) {
     return INS_OR;
 }
 
-sword call_SUBA(A3000 *a3000) {
+sword call_SUBA(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1246,7 +1246,7 @@ sword call_SUBA(A3000 *a3000) {
     return INS_SUBA;
 }
 
-sword call_SUBX(A3000 *a3000) {
+sword call_SUBX(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
@@ -1354,7 +1354,7 @@ sword call_SUBX(A3000 *a3000) {
     }
     else
     {
-        AMA ama = get_AMA(a3000); 
+        ama_t ama = get_AMA(a3000); 
 
         a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
 
@@ -1458,7 +1458,7 @@ sword call_SUBX(A3000 *a3000) {
     return INS_SUBX;
 }
 
-sword call_SUB(A3000 *a3000) {
+sword call_SUB(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1665,43 +1665,43 @@ sword call_SUB(A3000 *a3000) {
     return INS_SUB;
 }
 
-sword call_CMPA(A3000 *a3000) {
+sword call_CMPA(a3000_t *a3000) {
     return INS_CMPA;
 }
 
-sword call_CMPM(A3000 *a3000) {
+sword call_CMPM(a3000_t *a3000) {
     return INS_CMPM;
 }
 
-sword call_EOR(A3000 *a3000) {
+sword call_EOR(a3000_t *a3000) {
     return INS_EOR;
 }
 
-sword call_CMP(A3000 *a3000) {
+sword call_CMP(a3000_t *a3000) {
     return INS_CMP;
 }
 
-sword call_MULU(A3000 *a3000) {
+sword call_MULU(a3000_t *a3000) {
     return INS_MULU;
 }
 
-sword call_MULS(A3000 *a3000) {
+sword call_MULS(a3000_t *a3000) {
     return INS_MULS;
 }
 
-sword call_ABCD(A3000 *a3000) {
+sword call_ABCD(a3000_t *a3000) {
     return INS_ABCD;
 }
 
-sword call_EXG(A3000 *a3000) {
+sword call_EXG(a3000_t *a3000) {
     return INS_EXG;
 }
 
-sword call_AND(A3000 *a3000) {
+sword call_AND(a3000_t *a3000) {
     return INS_AND;
 }
 
-sword call_ADDA(A3000 *a3000) {
+sword call_ADDA(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -1741,7 +1741,7 @@ sword call_ADDA(A3000 *a3000) {
     return INS_ADDA;
 }
 
-sword call_ADDX(A3000 *a3000) {
+sword call_ADDX(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     byte rm = (a3000->opcode >> 3) & 0b1; // 0 = data to data register, 1 = address to address register with predecrement addr mode
@@ -1849,7 +1849,7 @@ sword call_ADDX(A3000 *a3000) {
     }
     else
     {
-        AMA ama = get_AMA(a3000);
+        ama_t ama = get_AMA(a3000);
 
         a = rl_ptr(address_register_indirect_with_predecrement_mode(a3000, ama)); // register Ry
 
@@ -1953,7 +1953,7 @@ sword call_ADDX(A3000 *a3000) {
     return INS_ADDX;
 }
 
-sword call_ADD(A3000 *a3000) {
+sword call_ADD(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     word opmode = (a3000->opcode >> 6) & 0b111;
@@ -2160,11 +2160,11 @@ sword call_ADD(A3000 *a3000) {
     return INS_ADD;
 }
 
-sword call_ASd(A3000 *a3000) {
+sword call_ASd(a3000_t *a3000) {
     return INS_ASD;
 }
 
-sword call_LSd(A3000 *a3000) {
+sword call_LSd(a3000_t *a3000) {
     a3000->cpu.PC += 2;
 
     CLEAR_V;
@@ -2421,67 +2421,67 @@ sword call_LSd(A3000 *a3000) {
     return INS_LSD;
 }
 
-sword call_ROXd(A3000 *a3000) {
+sword call_ROXd(a3000_t *a3000) {
     return INS_ROXD;
 }
 
-sword call_ROd(A3000 *a3000) {
+sword call_ROd(a3000_t *a3000) {
     return INS_ROD;
 }
 
-sword call_BFFFO_BFEXTU(A3000 *a3000) {
+sword call_BFFFO_BFEXTU(a3000_t *a3000) {
     return INS_BFFFO_BFEXTU;
 }
 
-sword call_BFEXTS(A3000 *a3000) {
+sword call_BFEXTS(a3000_t *a3000) {
     return INS_BFEXTS;
 }
 
-sword call_BFINS(A3000 *a3000) {
+sword call_BFINS(a3000_t *a3000) {
     return INS_BFINS;
 }
 
-sword call_BFTST(A3000 *a3000) {
+sword call_BFTST(a3000_t *a3000) {
     return INS_BFTST;
 }
 
-sword call_BFCHG(A3000 *a3000) {
+sword call_BFCHG(a3000_t *a3000) {
     return INS_BFCHG;
 }
 
-sword call_BFCLR(A3000 *a3000) {
+sword call_BFCLR(a3000_t *a3000) {
     return INS_BFCLR;
 }
 
-sword call_BFSET(A3000 *a3000) {
+sword call_BFSET(a3000_t *a3000) {
     return INS_BFSET;
 }
 
-sword call_P(A3000 *a3000) {
+sword call_P(a3000_t *a3000) {
     return INS_P;
 }
 
-sword call_cpGEN(A3000 *a3000) {
+sword call_cpGEN(a3000_t *a3000) {
     return INS_CPGEN;
 }
 
-sword call_cpDBcc(A3000 *a3000) {
+sword call_cpDBcc(a3000_t *a3000) {
     return INS_CPDBCC;
 }
 
-sword call_cpTRAPcc(A3000 *a3000) {
+sword call_cpTRAPcc(a3000_t *a3000) {
     return INS_CPTRAPCC;
 }
 
-sword call_cpScc(A3000 *a3000) {
+sword call_cpScc(a3000_t *a3000) {
     return INS_CPSCC;
 }
 
-sword call_cpSAVE(A3000 *a3000) {
+sword call_cpSAVE(a3000_t *a3000) {
     return INS_CPSAVE;
 }
 
-sword call_cpRESTORE(A3000 *a3000) {
+sword call_cpRESTORE(a3000_t *a3000) {
     return INS_CPRESTORE;
 }
 
@@ -2492,7 +2492,7 @@ sword call_cpRESTORE(A3000 *a3000) {
     (this doesn't look elegant to me)
 
 */
-sword look_up_instruction(A3000 *a3000) {
+sword look_up_instruction(a3000_t *a3000) {
     word chunk_1 = (a3000->opcode >> 12) & 0b1111; // Extract the 1st-4th bits
     word chunk_2 = (a3000->opcode >> 9) & 0b111; // Extract the 5th-7th bits
     word chunk_3 = (a3000->opcode >> 8) & 0b1; // Extract the 8th bit
@@ -3205,5 +3205,5 @@ sword look_up_instruction(A3000 *a3000) {
 
     exception(a3000, VEC_ILLEGAL_INSTRUCTION);
     
-    return 4;
+    return -404;
 }
